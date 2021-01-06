@@ -4,7 +4,7 @@ def call(
     String noWorkspace = 'false'
 ) {
     script {
-        if (noWorkspace == 'true') {
+        if (noWorkspace.toBoolean()) {
             // Assume CMDB configured on the job
             def fileContent = readTrusted path: "pipelines/properties/${properties_file}.properties"
             def contextProperties = readProperties interpolate: true, text: fileContent
