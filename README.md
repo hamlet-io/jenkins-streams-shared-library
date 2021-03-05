@@ -18,7 +18,7 @@ They use the Jenkins multi-branch pipeline plugin to permit a variety of develop
 
 ### Stream jobs
 
-Stream jobs define the deployment journey of the results of a build job through environments. In the overview diagram, two examples are shown. `cd` is the continuous stream which automatically deploys any changes to `ENV1`. `release` is a managed stream, with changes progressing through `ENV2`, `ENV3`, `ENV4` and `PROD`. The transition from `ENV4` to `PROD` involves different accounts/subscriptions from the cloud provider.
+Stream jobs define the deployment journey of the results of a build job through environments. In the overview diagram, two examples are shown. `cd` is the continuous stream which automatically deploys any changes to `ENV1`. `release` is a managed stream, with changes progressing through `ENV2`, `ENV3` and `PROD`. The transition from `ENV3` to `PROD` involves different accounts/subscriptions from the cloud provider.
 
 Each environment can have an entry and exit "gate", which define the actions needed for builds to be deployed into an environment (entry) and for the builds to be considered suitable to proceed to the next environment (exit). Depending on the conditions included in the gates, a variety of deployment patterns, including continuous deployment and managed releases, can be implemented.
 
