@@ -1,8 +1,8 @@
-<b>Purpose</b>
+<em>Purpose</em>
 <p>
 Send event notifications to one or more collaboration channels
 </p>
-<b>Parameters</b>
+<em>Parameters</em>
 <dl>
 <dt>title</dt>
 <dd>
