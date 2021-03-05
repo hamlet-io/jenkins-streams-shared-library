@@ -1,0 +1,451 @@
+#!groovy
+
+// Managed release deployment stream
+
+@Library('hamlet-streams') _
+
+pipeline {
+    agent none
+
+    options {
+        durabilityHint('PERFORMANCE_OPTIMIZED')
+        parallelsAlwaysFailFast()
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        string(
+            name: 'SEGMENT',
+            defaultValue: '',
+            description: 'Segment to update/deploy'
+        )
+        string(
+            name: 'DEPLOYMENT_GROUP',
+            defaultValue: '',
+            description: 'The group to deploy'
+        )
+        string(
+            name: 'DEPLOYMENT_UNITS',
+            defaultValue: '',
+            description: 'The units to deploy'
+        )
+        string(
+            name: 'CODE_UNITS',
+            defaultValue: '',
+            description: 'The code units to update'
+        )
+        string(
+            name: 'GIT_COMMIT',
+            defaultValue: '',
+            description: 'The git commit to apply to the code units'
+        )
+        string(
+            name: 'CODE_TAG',
+            defaultValue: '',
+            description: 'The tag to apply to the code units'
+        )
+        string(
+            name: 'RELEASE_IDENTIFIER',
+            defaultValue: '',
+            description: 'The identifier for the managed deployment'
+        )
+    }
+
+    environment {
+        PARTITION = "${env.JOB_NAME}".split('/').first()
+        JOB_BASE = "/" + "${env.PARTITION}"
+        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
+    }
+
+    stages {
+        stage('ENV2') {
+            environment {
+                ENVIRONMENT = 'env2'
+            }
+
+            stages {
+                stage('ENV2 Plan') {
+                    steps {
+                        // Standard block for all stages so can restart at any stage
+                        loadProperties("${env.BASE_PROPERTIES}", 'true')
+                        script {
+                            currentBuild.displayName = params.RELEASE_IDENTIFIER
+                            currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
+                            env.channels = "${env.TEAMS_E6}, ${env.SLACK_E6}"
+                        }
+
+                        // Generate plan that can be checked before deployment
+                        triggerPlan(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.CODE_UNITS,
+                            params.GIT_COMMIT,
+                            params.CODE_TAG,
+                            env.channels
+                        )
+                    }
+                }
+
+                stage ('ENV2 Confirm Deploy') {
+                    options {
+                        timeout(time:14, unit: 'DAYS')
+                    }
+
+                    input {
+                        message "Deploy to ENV2?"
+                        submitterParameter "APPROVER"
+                        ok "Yes"
+                    }
+
+                    steps {
+                        echo "ENV2 deploy approved by ${APPROVER}"
+                    }
+
+                    post {
+                        success {
+                            notifyEntryConfirmation(
+                                env.APPROVER,
+                                env.ENVIRONMENT,
+                                params.SEGMENT,
+                                params.DEPLOYMENT_GROUP,
+                                params.DEPLOYMENT_UNITS,
+                                params.CODE_UNITS,
+                                params.GIT_COMMIT,
+                                params.CODE_TAG,
+                                params.RELEASE_IDENTIFIER,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage ('ENV2 Deploy') {
+                    steps {
+                        // Update build references
+                        triggerUpdate(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.CODE_UNITS,
+                            params.GIT_COMMIT,
+                            params.CODE_TAG,
+                            env.channels
+                        )
+
+                        // Perform deployment
+                        triggerDeploy(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.RELEASE_IDENTIFIER,
+                            env.channels
+                        )
+                    }
+                }
+
+                stage ('ENV2 Confirm Accept') {
+                    options {
+                        timeout(time:14, unit: 'DAYS')
+                    }
+
+                    input {
+                        message "Accept ENV2?"
+                        submitterParameter "APPROVER"
+                        ok "Yes"
+                    }
+
+                    steps {
+                        echo "ENV2 accept approved by ${APPROVER}"
+                    }
+
+                    post {
+                        success {
+                            notifyExitConfirmation(
+                                env.APPROVER,
+                                env.ENVIRONMENT,
+                                params.SEGMENT,
+                                params.DEPLOYMENT_GROUP,
+                                params.DEPLOYMENT_UNITS,
+                                params.CODE_UNITS,
+                                params.GIT_COMMIT,
+                                params.CODE_TAG,
+                                params.RELEASE_IDENTIFIER,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage ('ENV2 Accept') {
+                    steps {
+                        // Accept changes
+                        triggerAccept(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.RELEASE_IDENTIFIER,
+                            env.channels
+                        )
+                    }
+                }
+            }
+        }
+
+        stage('ENV3') {
+            environment {
+                ENVIRONMENT = 'env3'
+            }
+
+            stages {
+                stage('ENV3 Plan') {
+                    steps {
+                        script {
+                        // Standard block for all stages so can restart at any stage
+                        loadProperties("${env.BASE_PROPERTIES}", 'true')
+                        script {
+                            currentBuild.displayName = params.RELEASE_IDENTIFIER
+                            currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
+                            env.channels = "${env.TEAMS_E7}, ${env.SLACK_E7}"
+                        }
+
+                        // Generate plan that can be checked before deployment
+                        triggerPlan(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.CODE_UNITS,
+                            params.GIT_COMMIT,
+                            params.CODE_TAG,
+                            env.channels
+                        )
+                    }
+                }
+
+                stage ('ENV3 Confirm Deploy') {
+                    options {
+                        timeout(time:14, unit: 'DAYS')
+                    }
+
+                    input {
+                        message "Deploy to ENV3?"
+                        submitterParameter "APPROVER"
+                        ok "Yes"
+                    }
+
+                    steps {
+                        echo "ENV3 deploy approved by ${APPROVER}"
+                    }
+
+                    post {
+                        success {
+                            notifyEntryConfirmation(
+                                env.APPROVER,
+                                env.ENVIRONMENT,
+                                params.SEGMENT,
+                                params.DEPLOYMENT_GROUP,
+                                params.DEPLOYMENT_UNITS,
+                                params.CODE_UNITS,
+                                params.GIT_COMMIT,
+                                params.CODE_TAG,
+                                params.RELEASE_IDENTIFIER,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage ('ENV3 Deploy') {
+                    steps {
+                        // Update build references
+                        triggerUpdate(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.CODE_UNITS,
+                            params.GIT_COMMIT,
+                            params.CODE_TAG,
+                            env.channels
+                        )
+
+                        // Perform deployment
+                        triggerDeploy(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.RELEASE_IDENTIFIER,
+                            env.channels
+                        )
+                    }
+                }
+
+                stage ('ENV3 Confirm Accept') {
+                    options {
+                        timeout(time:14, unit: 'DAYS')
+                    }
+
+                    input {
+                        message "Accept ENV3?"
+                        submitterParameter "APPROVER"
+                        ok "Yes"
+                    }
+
+                    steps {
+                        echo "ENV3 accept approved by ${APPROVER}"
+                    }
+
+                    post {
+                        success {
+                            notifyExitConfirmation(
+                                env.APPROVER,
+                                env.ENVIRONMENT,
+                                params.SEGMENT,
+                                params.DEPLOYMENT_GROUP,
+                                params.DEPLOYMENT_UNITS,
+                                params.CODE_UNITS,
+                                params.GIT_COMMIT,
+                                params.CODE_TAG,
+                                params.RELEASE_IDENTIFIER,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage ('ENV3 Accept') {
+                    steps {
+                        // Accept changes
+                        triggerAccept(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.RELEASE_IDENTIFIER,
+                            env.channels
+                        )
+                    }
+                }
+            }
+        }
+
+        stage('Production') {
+            environment {
+                FROM_ENVIRONMENT = 'env3'
+                ENVIRONMENT = 'production'
+            }
+
+            stages {
+                stage('Production Plan') {
+                    steps {
+                        // Standard block for all stages so can restart at any stage
+                        loadProperties("${env.BASE_PROPERTIES}", 'true')
+                        script {
+                            currentBuild.displayName = params.RELEASE_IDENTIFIER
+                            currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
+                            env.channels = "${env.TEAMS_PRODUCTION}, ${env.SLACK_PRODUCTION}"
+                        }
+
+                        // Generate plan that can be checked before deployment
+                        triggerPlan(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.CODE_UNITS,
+                            params.GIT_COMMIT,
+                            params.CODE_TAG,
+                            env.channels
+                        )
+                    }
+                }
+
+                stage ('Production Confirm Deploy') {
+                    options {
+                        timeout(time:14, unit: 'DAYS')
+                    }
+
+                    input {
+                        message "Deploy to Production?"
+                        submitterParameter "APPROVER"
+                        ok "Yes"
+                    }
+
+                    steps {
+                        echo "Production deploy approved by ${APPROVER}"
+                    }
+
+                    post {
+                        success {
+                            notifyEntryConfirmation(
+                                env.APPROVER,
+                                env.ENVIRONMENT,
+                                params.SEGMENT,
+                                params.DEPLOYMENT_GROUP,
+                                params.DEPLOYMENT_UNITS,
+                                params.CODE_UNITS,
+                                params.GIT_COMMIT,
+                                params.CODE_TAG,
+                                params.RELEASE_IDENTIFIER,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage ('Production Deploy') {
+                    steps {
+                        // Transfer builds
+                        triggerTransfer(
+                            env.JOB_BASE,
+                            env.FROM_ENVIRONMENT,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.CODE_UNITS,
+                            params.GIT_COMMIT,
+                            env.channels
+                        )
+
+                        // Update build references
+                        triggerUpdate(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.CODE_UNITS,
+                            params.GIT_COMMIT,
+                            params.CODE_TAG,
+                            env.channels
+                        )
+
+                        // Perform deployment
+                        triggerDeploy(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.RELEASE_IDENTIFIER,
+                            env.channels
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+

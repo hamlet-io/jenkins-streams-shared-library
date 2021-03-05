@@ -1,0 +1,145 @@
+#!groovy
+
+// Generate job to transfer build images
+
+@Library('hamlet-streams') _
+
+pipeline {
+    agent {
+        label 'hamlet-latest'
+    }
+
+    options {
+        durabilityHint('SURVIVABLE_NONATOMIC')
+        parallelsAlwaysFailFast()
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        string(
+            name: 'FROM_ENVIRONMENT',
+            defaultValue: '',
+            description: 'Environment to source images from'
+        )
+        string(
+            name: 'ENVIRONMENT',
+            defaultValue: '',
+            description: 'Environment to target'
+        )
+        string(
+            name: 'SEGMENT',
+            defaultValue: '',
+            description: 'Segment to update'
+        )
+        string(
+            name: 'DEPLOYMENT_GROUP',
+            defaultValue: '',
+            description: 'The group to transfer'
+        )
+        string(
+            name: 'CODE_UNITS',
+            defaultValue: '',
+            description: 'The code units to transfer'
+        )
+        string(
+            name: 'GIT_COMMIT',
+            defaultValue: '',
+            description: 'The git commit to transfer'
+        )
+        string(
+            name: 'CHANNELS',
+            defaultValue: '',
+            description: 'The channels for messages'
+        )
+    }
+
+    environment {
+        // Credentials - specific to the cloud provider
+        CLOUD_CREDENTIALS = credentials('aws')
+        // Replace <AUTOMATION_USER> with the actual user configured in Jenkins
+        <AUTOMATION_USER>_AWS_ACCESS_KEY_ID = "${env["CLOUD_CREDENTIALS_USR"]}"
+        <AUTOMATION_USER>_AWS_SECRET_ACCESS_KEY = "${env["CLOUD_CREDENTIALS_PSW"]}"
+        GITHUB_CREDENTIALS = credentials('github')
+
+        FROM_ENVIRONMENT = "${params.FROM_ENVIRONMENT}"
+        ENVIRONMENT = "${params.ENVIRONMENT}"
+        SEGMENT = "${params.SEGMENT}"
+        DEPLOYMENT_UNITS = "${params.CODE_UNITS}"
+        GIT_COMMIT = "${params.GIT_COMMIT}"
+
+        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
+                    currentBuild.description = "FromEnvironment: ${params.FROM_ENVIRONMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.CODE_UNITS}, Commit: ${params.GIT_COMMIT}"
+                }
+                loadCMDB()
+                loadProperties("${env.BASE_PROPERTIES}")
+            }
+        }
+
+        stage('Transfer') {
+            environment {
+                APPLY_TO_ALL_DEPLOYMENT_UNITS = "true"
+            }
+
+            steps {
+                sh '''#!/bin/bash
+                    ${AUTOMATION_BASE_DIR}/setContext.sh -r promotion
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+
+                sh '''#!/bin/bash
+                    ${AUTOMATION_DIR}/constructTree.sh
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+
+                sh '''#!/bin/bash
+                    ${AUTOMATION_DIR}/manageBuildReferences.sh -v latest
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            notifyTransferSuccess(
+                params.FROM_ENVIRONMENT,
+                params.ENVIRONMENT,
+                params.SEGMENT,
+                params.DEPLOYMENT_GROUP,
+                params.CODE_UNITS,
+                params.GIT_COMMIT,
+                params.CHANNELS
+            )
+        }
+
+        failure {
+            notifyTransferFailure(
+                params.FROM_ENVIRONMENT,
+                params.ENVIRONMENT,
+                params.SEGMENT,
+                params.DEPLOYMENT_GROUP,
+                params.CODE_UNITS,
+                params.GIT_COMMIT,
+                params.CHANNELS
+            )
+        }
+
+        cleanup {
+            cleanWs()
+        }
+    }
+}

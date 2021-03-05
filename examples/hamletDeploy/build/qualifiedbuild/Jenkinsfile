@@ -1,0 +1,682 @@
+#!groovy
+
+// Multi Unit build pipeline
+// The force_* parameters allow you to override the conditional trigger on the file paths, this is useful in builds which fail for underlying services or updates to the builders are made
+// Example of multiple builds from a single code base
+
+@Library('hamlet-streams') _
+
+pipeline {
+    agent {
+        label 'hamlet-latest'
+    }
+
+    options {
+        timestamps ()
+        buildDiscarder(
+            logRotator(
+                numToKeepStr: '10'
+            )
+        )
+        disableConcurrentBuilds()
+        durabilityHint('SURVIVABLE_NONATOMIC')
+        parallelsAlwaysFailFast()
+        checkoutToSubdirectory 'build'
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        choice(
+            name: 'force_build',
+            choices: ['none', 'ui', 'gw', 'imp', 'all'],
+            description: 'Force build of component(s)'
+        )
+
+        booleanParam(
+            name: 'qa',
+            defaultValue: 'true',
+            description: 'Perform QA activities'
+        )
+
+        booleanParam(
+            name: 'cd_stream',
+            defaultValue: 'true',
+            description: 'Trigger deploy to cd stream after build'
+        )
+
+        booleanParam(
+            name: 'release_stream',
+            defaultValue: 'true',
+            description: 'Trigger deploy to the release stream on tag'
+        )
+    }
+
+    environment {
+        // Config to obtain product level properties
+        product_cmdb_url = '<repo url>'
+
+        // Credentials - specific to the cloud provider
+        CLOUD_CREDENTIALS = credentials('aws')
+        // Replace <AUTOMATION_USER> with the actual user configured in Jenkins
+        <AUTOMATION_USER>_AWS_ACCESS_KEY_ID = "${env["CLOUD_CREDENTIALS_USR"]}"
+        <AUTOMATION_USER>_AWS_SECRET_ACCESS_KEY = "${env["CLOUD_CREDENTIALS_PSW"]}"
+        GITHUB_CREDENTIALS = credentials('github')
+
+        // Segment to be built
+        REGISTRY_SCOPE='segment'
+        SEGMENT='<targetted segment>'
+
+        // Build qualifier used on CI targets
+        BUILD_QUALIFIER='internal'
+
+        // Deployment triggers
+        cd_branch='stagetoaws'
+        continuous_tag="^v\\d+\\.\\d+\\.\\d+-continuous(\\+${env.BUILD_QUALIFIER})?\$"
+        release_tag="^v\\d+\\.\\d+\\.\\d+(-release)?(\\+${env.BUILD_QUALIFIER})?\$"
+
+        // Group being built
+        DEPLOYMENT_GROUP='application'
+
+        // The version selected needs to be supported in nodenv - check the
+        // build output for a list of supported versions if the one selected
+        // isn't supported.
+        nodejs_version='10.19.0'
+
+        // Reference job for QA checks
+        referenceJobName="<path to build job for cd branch>"
+
+        // Paths to jobs
+        PARTITION = "${env.JOB_NAME}".split('/').first()
+        JOB_BASE = "/" + "${env.PARTITION}"
+        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                // Check out with submodules
+                dir('build') {
+                    script {
+                        repo = checkout([
+                            $class: 'GitSCM',
+                            branches: scm.branches,
+                            doGenerateSubmoduleConfigurations: false,
+                            extensions: scm.extensions + [[$class: 'SubmoduleOption', disableSubmodules: false, parentCredentials: true, recursiveSubmodules: true,]],
+                            userRemoteConfigs: scm.userRemoteConfigs
+                        ])
+
+                        env["GIT_COMMIT"] = repo.GIT_COMMIT
+                    }
+                }
+
+                // Establish the version of nodejs to be used for all builds
+                setNodejsVersion("${nodejs_version}")
+
+                // Load the product properties
+                loadCMDB(env.product_cmdb_url)
+                loadProperties("${env.BASE_PROPERTIES}")
+
+                // Where to send build messages
+                script {
+                    env.channels = "${env.TEAMS_BUILDS}, ${env.SLACK_BUILDS}"
+                }
+            }
+        }
+
+        stage('UI') {
+            when {
+                anyOf {
+                   changeset "spa/**"
+
+                    equals expected: 'ui', actual: params.force_build
+                    equals expected: 'all', actual: params.force_build
+
+                    tag pattern: env.continuous_tag, comparator: "REGEXP"
+                    tag pattern: env.release_tag, comparator: "REGEXP"
+                }
+            }
+
+            environment {
+                BUILD_PATH = 'spa'
+                BUILD_SRC_DIR = 'pkg'
+
+                PRIMARY_DEPLOYMENT_UNIT = 'app-v1'
+                SECONDARY_DEPLOYMENT_UNITS = ' '
+                IMAGE_FORMATS = 'spa'
+            }
+
+            stages {
+                stage('Setup UI') {
+                    steps {
+                        dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
+                            runCITargets('setup')
+                        }
+                    }
+
+                    post {
+                        failure {
+                            notifySetupFailure(
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage('QA UI') {
+                    when {
+                        equals expected: true, actual: params.qa
+                    }
+
+                    steps {
+                        dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
+                            runCITargets('clean,lint,test')
+                        }
+                    }
+
+                    post {
+                        always {
+                            dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}/qa") {
+                                // Junit results
+                                junit testResults: 'junit-cargo-ui.xml'
+                                // Coverage results
+                                publishCoverage adapters: [coberturaAdapter('cobertura-coverage.xml')]
+                                // Linting results
+                                recordIssues referenceJobName: env.referenceJobName, enabledForFailure: false, tool: checkStyle(id: 'ui-js', name: 'ui-js', pattern: 'eslint-report.xml')
+                                recordIssues referenceJobName: env.referenceJobName, enabledForFailure: false, tool: checkStyle(id: 'ui-html', name : 'ui-html', pattern: 'htmlhint-report.xml')
+                                recordIssues referenceJobName: env.referenceJobName, enabledForFailure: false, tool: checkStyle(id: 'ui-css', name: 'ui-css', pattern: 'stylelint-report.xml')
+                            }
+                        }
+
+                        failure {
+                            notifyQAFailure(
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage('Build UI') {
+                    environment {
+                        GENERATION_CONTEXT_DEFINED = ''
+                    }
+
+                    steps {
+                        dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
+                            runCITargets( "clean,build:${env.BUILD_QUALIFIER}" )
+                            runCITargets( "${env.IMAGE_FORMATS}" )
+                        }
+
+                        uploadArtifactsToRegistry(
+                            env.PRIMARY_DEPLOYMENT_UNIT,
+                            env.REGISTRY_SCOPE,
+                            env.IMAGE_FORMATS,
+                            env.GIT_COMMIT
+                        )
+                    }
+
+                    post {
+                        success {
+                            notifyBuildSuccess(
+                                env.SEGMENT,
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+
+                        failure {
+                            notifyBuildFailure(
+                                env.SEGMENT,
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage ('Trigger UI CD Deploy') {
+                    when {
+                        allOf {
+                            equals expected: true, actual: params.cd_stream
+                            branch pattern: env.cd_branch, comparator: "REGEXP"
+                        }
+                    }
+
+                    environment {
+                        DEPLOYMENT_STREAM="${env.CD_STREAM}"
+                    }
+
+                    steps {
+                        triggerStream(
+                            env.JOB_BASE,
+                            env.DEPLOYMENT_STREAM,
+                            env.SEGMENT,
+                            env.DEPLOYMENT_GROUP,
+                            "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
+                            env.PRIMARY_DEPLOYMENT_UNIT,
+                            env.GIT_COMMIT
+                        )
+                    }
+
+                    post {
+                        failure {
+                            notifyTriggerStreamFailure(
+                                env.DEPLOYMENT_STREAM,
+                                env.SEGMENT,
+                                env.DEPLOYMENT_GROUP,
+                                "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                "",
+                                env.channels
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('GW') {
+            when {
+                anyOf {
+                    changeset "bff/api/gw/**"
+                    changeset "bff/api/spec/**"
+
+                    equals expected: 'gw', actual: params.force_build
+                    equals expected: 'all', actual: params.force_build
+
+                    tag pattern: env.continuous_tag, comparator: "REGEXP"
+                    tag pattern: env.release_tag, comparator: "REGEXP"
+                }
+            }
+
+            environment {
+                BUILD_PATH = 'bff/api/gw'
+
+                PRIMARY_DEPLOYMENT_UNIT = 'bff-v1'
+                SECONDARY_DEPLOYMENT_UNITS = 'bff-mock-v1 authorizer-v1-imp authorizer-mock-v1-imp'
+                IMAGE_FORMATS = 'openapi'
+            }
+
+            stages {
+                stage('Setup GW') {
+                    steps {
+                        dir("build/${BUILD_PATH}") {
+                            runCITargets('setup')
+                        }
+                    }
+
+                    post {
+                        failure {
+                            notifySetupFailure(
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage('Build GW') {
+                    environment {
+                        GENERATION_CONTEXT_DEFINED = ''
+                    }
+
+                    steps {
+                        dir("build/${BUILD_PATH}") {
+                            runCITargets( "clean, generate:${env.BUILD_QUALIFIER}" )
+                            buildOpenapi( "${env.IMAGE_FORMATS}" )
+                        }
+
+                        uploadArtifactsToRegistry(
+                            env.PRIMARY_DEPLOYMENT_UNIT,
+                            env.REGISTRY_SCOPE,
+                            env.IMAGE_FORMATS,
+                            env.GIT_COMMIT
+                        )
+                    }
+
+                    post {
+                        success {
+                            notifyBuildSuccess(
+                                env.SEGMENT,
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                        failure {
+                            notifyBuildFailure(
+                                env.SEGMENT,
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage('QA GW') {
+                    when {
+                        equals expected: true, actual: params.qa
+                    }
+
+                    steps {
+                        dir("build/${BUILD_PATH}") {
+                            // Turn off until rules defined
+                            // runCITargets('lint')
+                            echo "Linting not implemented"
+                        }
+                    }
+
+                    post {
+                        failure {
+                            notifyQAFailure(
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage ('Trigger GW CD Deploy') {
+                    when {
+                        allOf {
+                            equals expected: true, actual: params.cd_stream
+                            branch pattern: env.cd_branch, comparator: "REGEXP"
+                        }
+                    }
+
+                    environment {
+                        DEPLOYMENT_STREAM="${env.CD_STREAM}"
+                    }
+
+                    steps {
+                        triggerStream(
+                            env.JOB_BASE,
+                            env.DEPLOYMENT_STREAM,
+                            env.SEGMENT,
+                            env.DEPLOYMENT_GROUP,
+                            "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
+                            env.PRIMARY_DEPLOYMENT_UNIT,
+                            env.GIT_COMMIT
+                        )
+                    }
+
+                    post {
+                        failure {
+                            notifyTriggerStreamFailure(
+                                env.DEPLOYMENT_STREAM,
+                                env.SEGMENT,
+                                env.DEPLOYMENT_GROUP,
+                                "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                "",
+                                env.channels
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('IMP') {
+            when {
+                anyOf {
+                    changeset "bff/api/imp/**"
+                    changeset "bff/api/spec/**"
+
+                    equals expected: 'imp', actual: params.force_build
+                    equals expected: 'all', actual: params.force_build
+
+                    tag pattern: env.continuous_tag, comparator: "REGEXP"
+                    tag pattern: env.release_tag, comparator: "REGEXP"
+                }
+            }
+
+            environment {
+                BUILD_PATH = 'bff/api/imp'
+                BUILD_SRC_DIR = 'pkg'
+
+                PRIMARY_DEPLOYMENT_UNIT = 'bff-v1-imp'
+                SECONDARY_DEPLOYMENT_UNITS = 'bff-mock-v1-imp'
+                IMAGE_FORMATS = 'lambda'
+            }
+
+            stages {
+                stage('Setup IMP') {
+                    steps {
+                        dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
+                            runCITargets('setup')
+                        }
+                    }
+
+                    post {
+                        failure {
+                            notifySetupFailure(
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage('QA IMP') {
+                    when {
+                        equals expected: true, actual: params.qa
+                    }
+
+                    steps {
+                        dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
+                            runCITargets( 'clean,lint' )
+                            // Temporarily disable tests
+                            // runCITargets('test')
+                        }
+                    }
+
+                    post {
+                        always {
+                            dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}/qa") {
+                                // Junit results
+                                // junit testResults: '<junit-output.xml>'
+                                // Coverage results
+                                // publishCoverage adapters: [coberturaAdapter('cobertura-coverage.xml')]
+                                // Linting results
+                                recordIssues referenceJobName: env.referenceJobName, enabledForFailure: false, tool: checkStyle(id: 'api-js', name: 'api-js', pattern: 'eslint-report.xml')
+                            }
+                        }
+
+                        failure {
+                            notifyQAFailure(
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage('Build IMP') {
+                    environment {
+                        GENERATION_CONTEXT_DEFINED = ''
+                    }
+
+                    steps {
+                        dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
+                            runCITargets( "clean,generate:${env.BUILD_QUALIFIER}" )
+                            runCITargetWithNodeOptions("build:${env.BUILD_QUALIFIER}")
+                            runCITargets( "${env.IMAGE_FORMATS}" )
+                        }
+
+                        uploadArtifactsToRegistry(
+                            env.PRIMARY_DEPLOYMENT_UNIT,
+                            env.REGISTRY_SCOPE,
+                            env.IMAGE_FORMATS,
+                            env.GIT_COMMIT
+                        )
+                    }
+
+                    post {
+                        success {
+                            notifyBuildSuccess(
+                                env.SEGMENT,
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                        failure {
+                            notifyBuildFailure(
+                                env.SEGMENT,
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                env.channels
+                            )
+                        }
+                    }
+                }
+
+                stage ('Trigger IMP CD Deploy') {
+                    when {
+                        allOf {
+                            equals expected: true, actual: params.cd_stream
+                            branch pattern: env.cd_branch, comparator: "REGEXP"
+                        }
+                    }
+
+                    environment {
+                        DEPLOYMENT_STREAM="${env.CD_STREAM}"
+                    }
+
+                    steps {
+                        triggerStream(
+                            env.JOB_BASE,
+                            env.DEPLOYMENT_STREAM,
+                            env.SEGMENT,
+                            env.DEPLOYMENT_GROUP,
+                            "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
+                            env.PRIMARY_DEPLOYMENT_UNIT,
+                            env.GIT_COMMIT
+                        )
+                    }
+
+                    post {
+                        failure {
+                            notifyTriggerStreamFailure(
+                                env.DEPLOYMENT_STREAM,
+                                env.SEGMENT,
+                                env.DEPLOYMENT_GROUP,
+                                "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
+                                env.PRIMARY_DEPLOYMENT_UNIT,
+                                env.GIT_COMMIT,
+                                "",
+                                env.channels
+                            )
+                        }
+                    }
+                }
+            }
+        }
+
+        stage('Trigger Continuous Tag Deploy') {
+            when {
+                allOf {
+                    equals expected: true, actual: params.cd_stream
+                    tag pattern: env.continuous_tag, comparator: "REGEXP"
+                }
+            }
+
+            environment {
+                DEPLOYMENT_STREAM="${env.CD_STREAM}"
+            }
+
+            steps {
+                loadProperties(env.SEGMENT)
+
+                triggerStream(
+                    env.JOB_BASE,
+                    env.DEPLOYMENT_STREAM,
+                    env.SEGMENT,
+                    env.DEPLOYMENT_GROUP,
+                    "${env.RELEASE_DEPLOYMENT_UNITS}",
+                    "${env.RELEASE_CODE_UNITS}",
+                    env.GIT_COMMIT,
+                    env.TAG_NAME
+
+                )
+            }
+
+            post {
+                failure {
+                    notifyTriggerStreamFailure(
+                        env.DEPLOYMENT_STREAM,
+                        env.SEGMENT,
+                        env.DEPLOYMENT_GROUP,
+                        "${env.RELEASE_DEPLOYMENT_UNITS}",
+                        "${env.RELEASE_CODE_UNITS}",
+                        env.GIT_COMMIT,
+                        env.TAG_NAME,
+                        env.channels
+                    )
+                }
+            }
+        }
+
+        stage('Trigger Release Tag Deploy') {
+            when {
+                allOf {
+                    equals expected: true, actual: params.release_stream
+                    tag pattern: env.release_tag, comparator: "REGEXP"
+                }
+            }
+
+            environment {
+                DEPLOYMENT_STREAM="${env.RELEASE_STREAM}"
+            }
+
+            steps {
+                loadProperties(env.SEGMENT)
+
+                triggerStream(
+                    env.JOB_BASE,
+                    env.DEPLOYMENT_STREAM,
+                    env.SEGMENT,
+                    env.DEPLOYMENT_GROUP,
+                    "${env.RELEASE_DEPLOYMENT_UNITS}",
+                    "${env.RELEASE_CODE_UNITS}",
+                    env.GIT_COMMIT,
+                    env.TAG_NAME
+                )
+            }
+
+            post {
+                failure {
+                    notifyTriggerStreamFailure(
+                        env.DEPLOYMENT_STREAM,
+                        env.SEGMENT,
+                        env.DEPLOYMENT_GROUP,
+                        "${env.RELEASE_DEPLOYMENT_UNITS}",
+                        "${env.RELEASE_CODE_UNITS}",
+                        env.GIT_COMMIT,
+                        env.TAG_NAME,
+                        env.channels
+                    )
+                }
+            }
+        }
+    }
+
+    post {
+        cleanup {
+            cleanWs()
+        }
+    }
+}

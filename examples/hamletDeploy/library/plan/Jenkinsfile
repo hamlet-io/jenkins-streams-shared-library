@@ -1,0 +1,153 @@
+#!groovy
+
+// Generate job to generate the plans for a release
+
+@Library('hamlet-streams') _
+
+pipeline {
+    agent {
+        label 'hamlet-latest'
+    }
+
+    options {
+        durabilityHint('SURVIVABLE_NONATOMIC')
+        parallelsAlwaysFailFast()
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        string(
+            name: 'ENVIRONMENT',
+            defaultValue: '',
+            description: 'Environment to target'
+        )
+        string(
+            name: 'SEGMENT',
+            defaultValue: '',
+            description: 'Segment to plan'
+        )
+        string(
+            name: 'DEPLOYMENT_GROUP',
+            defaultValue: '',
+            description: 'The group to deploy'
+        )
+        string(
+            name: 'DEPLOYMENT_UNITS',
+            defaultValue: '',
+            description: 'The units to deploy'
+        )
+        string(
+            name: 'CODE_UNITS',
+            defaultValue: '',
+            description: 'The code units to update'
+        )
+        string(
+            name: 'GIT_COMMIT',
+            defaultValue: '',
+            description: 'The git commit to apply to the code units'
+        )
+        string(
+            name: 'CODE_TAG',
+            defaultValue: '',
+            description: 'The tag to apply to the code units'
+        )
+        string(
+            name: 'CHANNELS',
+            defaultValue: '',
+            description: 'The channels for messages'
+        )
+        booleanParam(
+            name: 'TREAT_RUN_ID_DIFFERENCES_AS_SIGNIFICANT',
+            defaultValue: false
+        )
+    }
+
+    environment {
+        // Credentials - specific to the cloud provider
+        CLOUD_CREDENTIALS = credentials('aws')
+        // Replace <AUTOMATION_USER> with the actual user configured in Jenkins
+        <AUTOMATION_USER>_AWS_ACCESS_KEY_ID = "${env["CLOUD_CREDENTIALS_USR"]}"
+        <AUTOMATION_USER>_AWS_SECRET_ACCESS_KEY = "${env["CLOUD_CREDENTIALS_PSW"]}"
+        GITHUB_CREDENTIALS = credentials('github')
+
+        ENVIRONMENT = "${params.ENVIRONMENT}"
+        SEGMENT = "${params.SEGMENT}"
+
+        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
+                    currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}, Tag: ${params.CODE_TAG}"
+                }
+                loadCMDB()
+                loadProperties("${env.BASE_PROPERTIES}")
+            }
+        }
+
+        stage('Update') {
+            steps {
+                sh '''#!/bin/bash
+                    ${AUTOMATION_BASE_DIR}/setContext.sh
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+
+                sh '''#!/bin/bash
+                    ${AUTOMATION_DIR}/constructTree.sh
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+
+                echo "Plan update not yet implemented"
+            }
+
+            post {
+                failure {
+                    notifyPlanUpdateFailure(
+                        params.ENVIRONMENT,
+                        params.SEGMENT,
+                        params.DEPLOYMENT_GROUP,
+                        params.CODE_UNITS,
+                        params.GIT_COMMIT,
+                        params.CODE_TAG,
+                        params.CHANNELS
+                    )
+                }
+            }
+        }
+
+        stage('Deploy') {
+            steps {
+                echo "Plan deploy not yet implemented"
+            }
+
+            post {
+                failure {
+                    notifyPlanDeployFailure(
+                        params.ENVIRONMENT,
+                        params.SEGMENT,
+                        params.DEPLOYMENT_GROUP,
+                        params.DEPLOYMENT_UNITS,
+                        params.CHANNELS
+                    )
+                }
+            }
+        }
+    }
+
+    post {
+        cleanup {
+            cleanWs()
+        }
+    }
+}

@@ -8,7 +8,7 @@ def call(
     String applicationUnits,
     String channels
 ) {
-    notifySuccess(
+    notifyFailure(
         "Manage Environment Failed",
         "Environment: ${environment}  \nSegment: ${segment}  \nLevels: ${levels}  \nSegmentUnits: ${segmentUnits}  \nSolutionUnits: ${solutionUnits}  \nApplicationUnits: ${applicationUnits}",
         channels

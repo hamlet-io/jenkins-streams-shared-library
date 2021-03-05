@@ -1,0 +1,167 @@
+#!groovy
+
+// Generate job to deploy units
+
+@Library('hamlet-streams') _
+
+pipeline {
+    agent {
+        label 'hamlet-latest'
+    }
+
+    options {
+        durabilityHint('SURVIVABLE_NONATOMIC')
+        parallelsAlwaysFailFast()
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        string(
+            name: 'ENVIRONMENT',
+            defaultValue: '',
+            description: 'Environment to target'
+        )
+        string(
+            name: 'SEGMENT',
+            defaultValue: '',
+            description: 'Segment to deploy'
+        )
+        string(
+            name: 'DEPLOYMENT_GROUP',
+            defaultValue: '',
+            description: 'The group to deploy'
+        )
+        string(
+            name: 'DEPLOYMENT_UNITS',
+            defaultValue: '',
+            description: 'The units to deploy'
+        )
+        string(
+            name: 'RELEASE_IDENTIFIER',
+            defaultValue: '',
+            description: 'The identifier for the managed deployment'
+        )
+        string(
+            name: 'CHANNELS',
+            defaultValue: '',
+            description: 'The channels for messages'
+        )
+        booleanParam(
+            name: 'TREAT_RUN_ID_DIFFERENCES_AS_SIGNIFICANT',
+            defaultValue: false
+        )
+    }
+
+    environment {
+        // Credentials - specific to the cloud provider
+        CLOUD_CREDENTIALS = credentials('aws')
+        // Replace <AUTOMATION_USER> with the actual user configured in Jenkins
+        <AUTOMATION_USER>_AWS_ACCESS_KEY_ID = "${env["CLOUD_CREDENTIALS_USR"]}"
+        <AUTOMATION_USER>_AWS_SECRET_ACCESS_KEY = "${env["CLOUD_CREDENTIALS_PSW"]}"
+        GITHUB_CREDENTIALS = credentials('github')
+
+        ENVIRONMENT = "${params.ENVIRONMENT}"
+        SEGMENT = "${params.SEGMENT}"
+
+        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
+                    currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Release: ${params.RELEASE_IDENTIFIER}"
+                }
+                loadCMDB()
+                loadProperties("${env.BASE_PROPERTIES}")
+
+                sh '''#!/bin/bash
+                    ${AUTOMATION_BASE_DIR}/setContext.sh
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+
+                sh '''#!/bin/bash
+                    ${AUTOMATION_DIR}/constructTree.sh
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+
+                sh '''#!/bin/bash
+                    ${AUTOMATION_DIR}/deploySetup.sh
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+            }
+        }
+
+        stage('Continuous-Deploy') {
+            when {
+                equals expected: '', actual: params.RELEASE_IDENTIFIER
+            }
+
+            steps {
+                sh '''#!/bin/bash
+                    ${AUTOMATION_DIR}/deploy.sh
+                '''
+            }
+        }
+
+        stage('Release-Deploy') {
+            when {
+                not {
+                    equals expected: '', actual: params.RELEASE_IDENTIFIER
+                }
+            }
+
+            environment {
+                RELEASE_IDENTIFIER = "${params.RELEASE_IDENTIFIER}"
+            }
+
+            steps {
+                sh '''#!/bin/bash
+                    [[ -n "${RELEASE_IDENTIFIER}" ]] && export DETAIL_MESSAGE="release=${RELEASE_IDENTIFIER}, ${DETAIL_MESSAGE}"
+                    ${AUTOMATION_DIR}/deploy.sh
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            notifyDeploySuccess(
+                params.ENVIRONMENT,
+                params.SEGMENT,
+                params.DEPLOYMENT_GROUP,
+                params.DEPLOYMENT_UNITS,
+                params.RELEASE_IDENTIFIER,
+                params.CHANNELS
+            )
+        }
+
+        failure {
+            notifyDeployFailure(
+                params.ENVIRONMENT,
+                params.SEGMENT,
+                params.DEPLOYMENT_GROUP,
+                params.DEPLOYMENT_UNITS,
+                params.RELEASE_IDENTIFIER,
+                params.CHANNELS
+            )
+        }
+
+        cleanup {
+            cleanWs()
+        }
+    }
+}

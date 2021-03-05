@@ -1,0 +1,105 @@
+#!groovy
+
+// Continuous deployment stream
+// Deploy to env1
+
+@Library('hamlet-streams') _
+
+pipeline {
+    agent none
+
+    options {
+        durabilityHint('PERFORMANCE_OPTIMIZED')
+        parallelsAlwaysFailFast()
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        string(
+            name: 'SEGMENT',
+            defaultValue: '',
+            description: 'Segment to update/deploy'
+        )
+        string(
+            name: 'DEPLOYMENT_GROUP',
+            defaultValue: '',
+            description: 'The group to deploy'
+        )
+        string(
+            name: 'DEPLOYMENT_UNITS',
+            defaultValue: '',
+            description: 'The units to deploy'
+        )
+        string(
+            name: 'CODE_UNITS',
+            defaultValue: '',
+            description: 'The code units to update'
+        )
+        string(
+            name: 'GIT_COMMIT',
+            defaultValue: '',
+            description: 'The git commit to apply to the code units'
+        )
+        string(
+            name: 'CODE_TAG',
+            defaultValue: '',
+            description: 'The tag to apply to the code units'
+        )
+        string(
+            name: 'RELEASE_IDENTIFIER',
+            defaultValue: '',
+            description: 'The identifier for the managed deployment'
+        )
+    }
+
+    environment {
+        PARTITION = "${env.JOB_NAME}".split('/').first()
+        JOB_BASE = "/" + "${env.PARTITION}"
+        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
+    }
+
+    stages {
+        stage('ENV1') {
+            environment {
+                ENVIRONMENT = 'env1'
+            }
+
+            stages {
+                stage ('ENV1 Deploy') {
+                    steps {
+                        // Standard block for all stages so can restart at any stage
+                        loadProperties("${env.BASE_PROPERTIES}", 'true')
+                        script {
+                            currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
+                            env.channels = "${env.TEAMS_ENV1}, ${env.SLACK_ENV1}"
+                        }
+
+                        // Update build references
+                        triggerUpdate(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.CODE_UNITS,
+                            params.GIT_COMMIT,
+                            params.CODE_TAG,
+                            env.channels
+                        )
+
+                        // Perform deployment
+                        triggerDeploy(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            params.DEPLOYMENT_GROUP,
+                            params.DEPLOYMENT_UNITS,
+                            params.RELEASE_IDENTIFIER,
+                            env.channels
+                        )
+
+                    }
+                }
+            }
+        }
+    }
+}
