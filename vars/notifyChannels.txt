@@ -1,8 +1,8 @@
-<em>Purpose</em>
 <p>
 Send event notifications to one or more collaboration channels
 </p>
 <em>Parameters</em>
+<p>
 <dl>
 <dt>title</dt>
 <dd>
@@ -24,3 +24,5 @@ A comma separated list of channels. Currently accepted formats are
 <dd>
 The hex RGB colour to be used in the notification highlight e.g. "<code>#B22222</code>"
 </dd>
+</dl>
+</p>
