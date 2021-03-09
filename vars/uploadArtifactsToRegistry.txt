@@ -1,0 +1,32 @@
+<p>
+Upload build artifacts to a registry
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>deployment_unit</dt>
+<dd>
+Deployment unit
+</dd>
+<dt>scope</dt>
+<dd>
+If equal to <code>SEGMENT</code>, the segment identifier is included in the registry identifier for the build
+</dd>
+<dt>image_formats</dt>
+<dd>
+The registries to which the image should be uploaded.
+</dd>
+<dt>git_commit</dt>
+<dd>
+The commit hash from which the artifact was built.
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+this step assumes the artifact is in zip format and named according to the image formats provided e.g. <code>lambda.zip</code>
+</li>
+</ul>
+</p>

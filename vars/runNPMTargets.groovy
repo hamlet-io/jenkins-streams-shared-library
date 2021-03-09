@@ -1,4 +1,4 @@
-// Run one or more CI specific targets - they always start with ci:
+// Run one or more NPM CI specific targets - they always start with ci:
 def call(
     String targets
 ) {
@@ -7,7 +7,7 @@ def call(
     }
     sh '''#!/bin/bash
     for run_target in ${run_targets}; do
-        npm run "ci:${target,,}"
+        npm run "ci:${run_target,,}"
     done
     '''
 }

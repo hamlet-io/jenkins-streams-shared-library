@@ -1,0 +1,20 @@
+<p>
+Execute one or more maven targets
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>targets</dt>
+<dd>
+Space separated list of targets to run in order
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+see also installMaven
+</li>
+</ul>
+</p>

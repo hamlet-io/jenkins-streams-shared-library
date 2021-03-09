@@ -1,0 +1,17 @@
+<p>
+Load a set of properties froma file in the CMDB
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>properties_file</dt>
+<dd>
+The filename without extension. It is assumed to be in the <code>pipelines/properties</code> directory of the CMDB and have a <code>.properties</code> extension.
+</dd>
+<dt>noWorkspace</dt>
+<dd>
+If true, the job is assumed to not have a workspace, in which case the CMDB repository is assumed to be configured on the job and the file is accessed using the readTrusted step.
+If false, the CMDB is assumed to be installed locally in a reserved location.
+</dd>
+</dl>
+</p>

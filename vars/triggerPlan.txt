@@ -1,0 +1,52 @@
+<p>
+Trigger the plan library block
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>jobBase</dt>
+<dd>
+Path to base of job tree for product
+</dd>
+<dt>environment</dt>
+<dd>
+Environment
+</dd>
+<dt>segment</dt>
+<dd>
+Segment
+</dd>
+<dt>group</dt>
+<dd>
+Deployment group
+</dd>
+<dt>deploymentUnits</dt>
+<dd>
+Deployment units
+</dd>
+<dt>codeUnits</dt>
+<dd>
+Code units
+</dd>
+<dt>commit</dt>
+<dd>
+Commit reference
+</dd>
+<dt>tag</dt>
+<dd>
+Commit tag
+</dd>
+<dt>channels</dt>
+<dd>
+Channels to be notified - see notifyChannels for channel formats
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+this step is intended to be used by stream jobs
+</li>
+</ul>
+</p>

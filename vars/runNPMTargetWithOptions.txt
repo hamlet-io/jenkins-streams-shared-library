@@ -1,0 +1,28 @@
+<p>
+Execute an npm target with NODE_OPTIONS
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>target</dt>
+<dd>
+Target to run
+</dd>
+<dt>options</dt>
+<dd>
+Value to use in the <code>NODE_OPTIONS</code> environment variable before the target is executed. The default is
+<code>--max-old-space-size=4096</code>
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+see also installNode
+</li>
+<li>
+useful for large builds
+</li>
+</ul>
+</p>

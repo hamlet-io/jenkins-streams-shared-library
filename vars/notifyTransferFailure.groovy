@@ -4,13 +4,13 @@ def call(
     String environment,
     String segment,
     String group,
-    String units,
+    String deploymentUnits,
     String commit,
     String channels
 ) {
     notifyFailure(
         "Transfer Failed",
-        "FromEnvironment: ${fromEnvironment}  \nEnvironment: ${environment}  \nSegment: ${segment}  \nGroup: ${group}  \nUnits: ${units}  \nCommit: ${commit}",
+        "FromEnvironment: ${fromEnvironment}  \nEnvironment: ${environment}  \nSegment: ${segment}  \nGroup: ${group}  \nUnits: ${deploymentUnits}  \nCommit: ${commit}",
         channels
     )
 }

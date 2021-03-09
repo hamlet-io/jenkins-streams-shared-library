@@ -110,7 +110,7 @@ pipeline {
                 }
 
                 // Establish the version of nodejs to be used for all builds
-                setNodejsVersion("${nodejs_version}")
+                installNodeVersion("${nodejs_version}")
 
                 // Load the product properties
                 loadCMDB(env.product_cmdb_url)
@@ -149,7 +149,7 @@ pipeline {
                 stage('Setup UI') {
                     steps {
                         dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
-                            runCITargets('setup')
+                            runNPMTargets('setup')
                         }
                     }
 
@@ -171,7 +171,7 @@ pipeline {
 
                     steps {
                         dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
-                            runCITargets('clean,lint,test')
+                            runNPMTargets('clean,lint,test')
                         }
                     }
 
@@ -206,8 +206,8 @@ pipeline {
 
                     steps {
                         dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
-                            runCITargets( "clean,build:${env.BUILD_QUALIFIER}" )
-                            runCITargets( "${env.IMAGE_FORMATS}" )
+                            runNPMTargets( "clean,build:${env.BUILD_QUALIFIER}" )
+                            runNPMTargets( "${env.IMAGE_FORMATS}" )
                         }
 
                         uploadArtifactsToRegistry(
@@ -307,7 +307,7 @@ pipeline {
                 stage('Setup GW') {
                     steps {
                         dir("build/${BUILD_PATH}") {
-                            runCITargets('setup')
+                            runNPMTargets('setup')
                         }
                     }
 
@@ -329,7 +329,7 @@ pipeline {
 
                     steps {
                         dir("build/${BUILD_PATH}") {
-                            runCITargets( "clean, generate:${env.BUILD_QUALIFIER}" )
+                            runNPMTargets( "clean, generate:${env.BUILD_QUALIFIER}" )
                             buildOpenapi( "${env.IMAGE_FORMATS}" )
                         }
 
@@ -369,7 +369,7 @@ pipeline {
                     steps {
                         dir("build/${BUILD_PATH}") {
                             // Turn off until rules defined
-                            // runCITargets('lint')
+                            // runNPMTargets('lint')
                             echo "Linting not implemented"
                         }
                     }
@@ -454,7 +454,7 @@ pipeline {
                 stage('Setup IMP') {
                     steps {
                         dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
-                            runCITargets('setup')
+                            runNPMTargets('setup')
                         }
                     }
 
@@ -476,9 +476,9 @@ pipeline {
 
                     steps {
                         dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
-                            runCITargets( 'clean,lint' )
+                            runNPMTargets( 'clean,lint' )
                             // Temporarily disable tests
-                            // runCITargets('test')
+                            // runNPMTargets('test')
                         }
                     }
 
@@ -511,9 +511,9 @@ pipeline {
 
                     steps {
                         dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
-                            runCITargets( "clean,generate:${env.BUILD_QUALIFIER}" )
-                            runCITargetWithNodeOptions("build:${env.BUILD_QUALIFIER}")
-                            runCITargets( "${env.IMAGE_FORMATS}" )
+                            runNPMTargets( "clean,generate:${env.BUILD_QUALIFIER}" )
+                            runNPMTargetWithNodeOptions("build:${env.BUILD_QUALIFIER}")
+                            runNPMTargets( "${env.IMAGE_FORMATS}" )
                         }
 
                         uploadArtifactsToRegistry(

@@ -1,5 +1,5 @@
 <p>
-Send event notifications to one or more collaboration channels
+Send event notification to one or more collaboration channels
 </p>
 <em>Parameters</em>
 <p>

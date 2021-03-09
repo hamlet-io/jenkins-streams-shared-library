@@ -1,0 +1,20 @@
+<p>
+Install a version of nodejs.
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>version</dt>
+<dd>
+The desired version. Version must be supported by <code>nodeenv</code>
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+see also runNPMTargets, runNPMTargetWithOptions
+</li>
+</ul>
+</p>

@@ -1,0 +1,45 @@
+<p>
+Trigger the manage library block
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>jobBase</dt>
+<dd>
+Path to base of job tree for product
+</dd>
+<dt>environment</dt>
+<dd>
+Environment
+</dd>
+<dt>segment</dt>
+<dd>
+Segment
+</dd>
+<dt>levels</dt>
+<dd>
+Levels to be performed - segment, solution, application
+</dd>
+<dt>segmentUnits</dt>
+<dd>
+Segment deployment units
+</dd>
+<dt>solutionUnits</dt>
+<dd>
+Solution deployment units
+</dd>
+<dt>applicationUnits</dt>
+<dd>
+Application deployment units
+</dd>
+<dt>treatAsSignificant</dt>
+<dd>
+If true, differences between current and newly generated templates related to differences in the <code>runId</code> are treated as significant.
+This is sometimes necessary to force the reprocessing of templates where otherwise they would be assumed to be unchanged.
+</dd>
+<dt>channels</dt>
+<dd>
+Channels to be notified - see notifyChannels for channel formats
+</dd>
+</dl>
+</p>

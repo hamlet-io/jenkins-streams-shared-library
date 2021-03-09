@@ -1,0 +1,28 @@
+<p>
+Send failure event notification to one or more collaboration channels
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>title</dt>
+<dd>
+See notifyChannels
+</dd>
+<dt>message</dt>
+<dd>
+See notifyChannels
+</dd>
+<dt>channels</dt>
+<dd>
+See notifyChannels
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+performs the same function as notifyChannels but with a standardised colour for failure
+</li>
+</ul>
+</p>

@@ -2,6 +2,14 @@
 
 This repo provides a range of support steps and examples to assist in the use of Jenkinsfiles to implement a deployment convention called "streams".
 
+## Repository structure
+
+`vars` - a range of steps to streamline the implementation of streams for a product. This follows the conventions outlined in the [Jenkins documentation](https://www.jenkins.io/doc/book/pipeline/shared-libraries/)
+
+`examples` - sample Jenkins jobs implementing the streams concept for various deployment frameworks.
+
+`assets` - images for use in this documentation
+
 ## Concept
 
 The streams convention identifies three uses of Jenkins pipeline based jobs - build, stream, and library. As shown below;
@@ -24,7 +32,7 @@ Each environment can have an entry and exit "gate", which define the actions nee
 
 Streams use the standard pipeline plugin and are designed to work with `agent none`, meaning they run on the lightweight executor and thus don't consume resources while waiting for user input - a typical condition used in a gate. They thus rely on triggering other library jobs to do the actual work of the deployment. They represent the desired release process with the concrete implementation being deferred to library jobs.
 
-The streams convention provides a nice separation between the CI part of the world controlled via a Jenkinsfile in a code repo, and the CD part of the world controlled by a Jenkinsfile kept in the hamlet IaC repo. Developers are in full control of what happens in their builds, while the change management folks worry about the desired processes to get the code through environments into production.
+The streams convention provides a nice separation between the CI part of the world controlled via a Jenkinsfile in a code repo, and the CD part of the world controlled by a Jenkinsfile kept in the hamlet "Infrastructure As Code" (IaC) repo. Developers are in full control of what happens in their builds, while the change management folks worry about the desired processes to get the code through environments into production.
 
 ### Library Jobs
 
@@ -33,6 +41,14 @@ Library jobs use the standard pipline plugin and are where the actions needed by
 Library jobs are the point at which a specific IaC framework must be selected. Currently this repo contains [examples](examples) for the hamletDeploy framework. By isolating details of how to invoke a particular IaC framework, stream designers can focus on processes without needing to understand the intricate details of the specific framework used.
 
 Each library job provides a reusable building block for stream designers.
+
+### Jenkins job hierarchy
+
+All jobs for a product live are assumed to live under a "jobBase" path within the Jenkins job hierarchy. Build and stream jobs can determine how they wish to identify this point, with the provided examples assuming each product has its own top level `partition` folder in Jenkins.
+
+Stream jobs are then expected to live under a `streams` folder, while library block jobs live under a `library` folder.
+
+While no constraint is placed on the location of build jobs and the management jobs within Jenkins, by convention they live under the `build` and `manage` folders respectively. A further useful convention is for each code repository to have a job (if one Jenkinsfile in the code repository) or a folder (if more than one Jenkinsfile) under the `build` folder. This makes it easy to identify job(s) specific to the repository of interest.
 
 ## Library Blocks
 
@@ -82,6 +98,8 @@ of the channels is left as a task for the calling pipeline.
 The following steps are provided to streamline the development of build pipelines.
 
 - buildOpenapi
+- installMaven
+- installNode
 - loadCMDB
 - loadProperties
 - notifyBuildFailure
@@ -89,9 +107,9 @@ The following steps are provided to streamline the development of build pipeline
 - notifyQAFailure
 - notifySetupFailure
 - notifyTriggerStreamFailure
-- runCITargets
-- runCITargetWithNodeOptions
-- setNodejsVersion
+- runMavenTargets
+- runNPMTargets
+- runNPMTargetWithOptions
 - triggerStream
 - uploadArtifactsToRegistry
 

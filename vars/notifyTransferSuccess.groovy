@@ -5,13 +5,13 @@ def call(
     String environment,
     String segment,
     String group,
-    String units,
+    String deploymentUnits,
     String commit,
     String channels
 ) {
     notifySuccess(
         "Transfer Completed",
-        "FromEnvironment: ${fromEnvironment}  \nEnvironment: ${environment}  \nSegment: ${segment}  \nGroup: ${group}  \nUnits: ${units}  \nCommit: ${commit}",
+        "FromEnvironment: ${fromEnvironment}  \nEnvironment: ${environment}  \nSegment: ${segment}  \nGroup: ${group}  \nUnits: ${deploymentUnits}  \nCommit: ${commit}",
         channels
     )
 }

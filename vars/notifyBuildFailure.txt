@@ -1,0 +1,24 @@
+<p>
+Send build failure event notification to one or more collaboration channels
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>segment</dt>
+<dd>
+Segment
+</dd>
+<dt>deploymentUnit</dt>
+<dd>
+Deployment unit
+</dd>
+<dt>commit</dt>
+<dd>
+Commit reference
+</dd>
+<dt>channels</dt>
+<dd>
+Channels to be notified - see notifyChannels for channel formats
+</dd>
+</dl>
+</p>

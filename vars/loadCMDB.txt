@@ -1,0 +1,21 @@
+<p>
+Clone the product CMDB into a reserved location in the workspace.
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>product_cmdb_url</dt>
+<dd>
+The full URL to the git repository for the product. If blank, the repo is assumed to be configured on the job itself so
+a checkout is performed. If not blank, the repository is checked out.
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+this step assumes that the product cmdb is in a single repository.
+</li>
+</ul>
+</p>

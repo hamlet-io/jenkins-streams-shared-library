@@ -3,14 +3,14 @@ void call(
     String environment,
     String segment,
     String group,
-    String units,
+    String deploymentUnits,
     String commit,
     String tag,
     String channels
 ) {
     notifyFailure(
         "Plan Update Failed",
-        "Environment: ${environment}  \nSegment: ${segment}  \nGroup: ${group}  \nUnits: ${units}  \nCommit: ${commit}  \nTag: ${tag}",
+        "Environment: ${environment}  \nSegment: ${segment}  \nGroup: ${group}  \nUnits: ${deploymentUnits}  \nCommit: ${commit}  \nTag: ${tag}",
         channels
     )
 }

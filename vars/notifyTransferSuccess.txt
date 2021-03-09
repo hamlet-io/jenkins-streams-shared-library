@@ -1,0 +1,44 @@
+<p>
+Send transfer success event notification to one or more collaboration channels
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>fromEnvironment</dt>
+<dd>
+Environment from which transfer should occur
+</dd>
+<dt>environment</dt>
+<dd>
+Environment to which transfer should occur
+</dd>
+<dt>segment</dt>
+<dd>
+Segment
+</dd>
+<dt>group</dt>
+<dd>
+Deployment group
+</dd>
+<dt>deploymentUnits</dt>
+<dd>
+Deployment units
+</dd>
+<dt>commit</dt>
+<dd>
+Commit reference
+</dd>
+<dt>channels</dt>
+<dd>
+Channels to be notified - see notifyChannels for channel formats
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+this step is intended to be used in conjunction with the transfer library block
+</li>
+</ul>
+</p>

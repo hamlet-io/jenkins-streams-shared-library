@@ -1,0 +1,24 @@
+<p>
+Install a version of maven.
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>version</dt>
+<dd>
+The desired version. Currently it must be a version of maven 3
+</dd>
+<dt>checksum</dt>
+<dd>
+The checksum of the installation - step will fail if checksum doesn't match download
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+see also runMavenTargets
+</li>
+</ul>
+</p>

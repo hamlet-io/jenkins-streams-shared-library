@@ -1,0 +1,16 @@
+<p>
+Assemble and validate an openapi specification, packaging it ready for upload to a registry.
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>image_formats</dt>
+<dd>
+The format to be produced.
+<ul>
+<li>swagger - swagger v2.0</li>
+<li>openapi - openapi v3.0</li>
+</ul>
+</dd>
+</dl>
+</p>

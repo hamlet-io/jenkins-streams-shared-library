@@ -1,0 +1,44 @@
+<p>
+Send manage success event notification to one or more collaboration channels
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>environment</dt>
+<dd>
+Environment
+</dd>
+<dt>segment</dt>
+<dd>
+Segment
+</dd>
+<dt>levels</dt>
+<dd>
+Levels to be performed - segment, solution, application
+</dd>
+<dt>segmentUnits</dt>
+<dd>
+Segment deployment units
+</dd>
+<dt>solutionUnits</dt>
+<dd>
+Solution deployment units
+</dd>
+<dt>applicationUnits</dt>
+<dd>
+Application deployment units
+</dd>
+<dt>channels</dt>
+<dd>
+Channels to be notified - see notifyChannels for channel formats
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+this step is intended to be used in conjunction with the manage library block
+</li>
+</ul>
+</p>
