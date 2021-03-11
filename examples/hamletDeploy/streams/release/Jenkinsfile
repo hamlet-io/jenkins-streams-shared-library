@@ -71,7 +71,7 @@ pipeline {
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.channels = "${env.TEAMS_E6}, ${env.SLACK_E6}"
+                            env.channels = "${env.TEAMS_ENV2}, ${env.SLACK_ENV2}"
                         }
 
                         // Generate plan that can be checked before deployment
@@ -213,7 +213,7 @@ pipeline {
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.channels = "${env.TEAMS_E7}, ${env.SLACK_E7}"
+                            env.channels = "${env.TEAMS_ENV3}, ${env.SLACK_ENV3}"
                         }
 
                         // Generate plan that can be checked before deployment

@@ -54,11 +54,6 @@ pipeline {
     }
 
     environment {
-        // Credentials - specific to the cloud provider
-        CLOUD_CREDENTIALS = credentials('aws')
-        // Replace <AUTOMATION_USER> with the actual user configured in Jenkins
-        <AUTOMATION_USER>_AWS_ACCESS_KEY_ID = "${env["CLOUD_CREDENTIALS_USR"]}"
-        <AUTOMATION_USER>_AWS_SECRET_ACCESS_KEY = "${env["CLOUD_CREDENTIALS_PSW"]}"
         GITHUB_CREDENTIALS = credentials('github')
 
         FROM_ENVIRONMENT = "${params.FROM_ENVIRONMENT}"
@@ -79,6 +74,8 @@ pipeline {
                 }
                 loadCMDB()
                 loadProperties("${env.BASE_PROPERTIES}")
+                // Uncomment if not using an agent role - see repository README for more details
+                // setCloudProviderCredentials('aws')
             }
         }
 

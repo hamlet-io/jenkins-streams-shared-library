@@ -55,11 +55,6 @@ pipeline {
         // Config to obtain product level properties
         product_cmdb_url = '<repo url>'
 
-        // Credentials - specific to the cloud provider
-        CLOUD_CREDENTIALS = credentials('aws')
-        // Replace <AUTOMATION_USER> with the actual user configured in Jenkins
-        <AUTOMATION_USER>_AWS_ACCESS_KEY_ID = "${env["CLOUD_CREDENTIALS_USR"]}"
-        <AUTOMATION_USER>_AWS_SECRET_ACCESS_KEY = "${env["CLOUD_CREDENTIALS_PSW"]}"
         GITHUB_CREDENTIALS = credentials('github')
 
         // Segment to be built
@@ -115,6 +110,9 @@ pipeline {
                 // Load the product properties
                 loadCMDB(env.product_cmdb_url)
                 loadProperties("${env.BASE_PROPERTIES}")
+
+                // Uncomment if not using an agent role - see repository README for more details
+                // setCloudProviderCredentials('aws')
 
                 // Where to send build messages
                 script {
