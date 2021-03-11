@@ -6,7 +6,7 @@ This repo provides a range of support steps and examples to assist in the use of
 
 `vars` - a range of steps to streamline the implementation of streams for a product. This follows the conventions outlined in the [Jenkins documentation](https://www.jenkins.io/doc/book/pipeline/shared-libraries/)
 
-`examples` - sample Jenkins jobs implementing the streams concept for the hamletDeploy deployment frameworks.
+`examples` - sample Jenkins jobs implementing the streams concept for the hamletDeploy deployment framework.
 
 `assets` - images for use in this documentation
 

@@ -7,7 +7,8 @@ def call(
     String deploymentUnits,
     String codeUnits,
     String commit,
-    String tag = ''
+    String tag = '',
+    String release = ''
 ) {
     script {
         build job: "${jobBase}/streams/${stream}",
@@ -19,7 +20,7 @@ def call(
                 string(name: 'CODE_UNITS', value: codeUnits),
                 string(name: 'GIT_COMMIT', value: commit)
                 string(name: 'CODE_TAG', value: tag),
-                string(name: 'RELEASE_IDENTIFIER', value: tag)
+                string(name: 'RELEASE_IDENTIFIER', value: (release == '') ? tag : release)
             ]
     }
 }
