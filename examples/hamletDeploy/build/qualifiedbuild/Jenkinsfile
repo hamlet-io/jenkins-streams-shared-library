@@ -75,7 +75,7 @@ pipeline {
         // The version selected needs to be supported in nodenv - check the
         // build output for a list of supported versions if the one selected
         // isn't supported.
-        nodejs_version='10.19.0'
+        node_version='10.19.0'
 
         // Reference job for QA checks
         referenceJobName="<path to build job for cd branch>"
@@ -105,7 +105,7 @@ pipeline {
                 }
 
                 // Establish the version of nodejs to be used for all builds
-                installNodeVersion("${nodejs_version}")
+                installNode("${node_version}")
 
                 // Load the product properties
                 loadCMDB(env.product_cmdb_url)
