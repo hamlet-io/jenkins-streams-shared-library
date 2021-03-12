@@ -5,7 +5,7 @@ def call(
     String commit,
     String channels
 ) {
-    notifyFailure(
+    notifySuccess(
         "Build Completed",
         "Segment: ${segment}  \nUnit: ${deploymentUnit}  \nCommit: ${commit}",
         channels

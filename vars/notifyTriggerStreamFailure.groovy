@@ -11,7 +11,7 @@ void call(
 ) {
     notifyFailure(
         "Stream Trigger Failure",
-        "Stream: ${stream}  \nSegment: ${segment}  \nDeployment Units: ${deploymentUnits}  \nCode Units: ${codeUnits}  \nCommit: ${commit}  \Tag: ${tag}",
+        "Stream: ${stream}  \nSegment: ${segment}  \nDeployment Units: ${deploymentUnits}  \nCode Units: ${codeUnits}  \nCommit: ${commit}  \nTag: ${tag}",
         channels
     )
 }
