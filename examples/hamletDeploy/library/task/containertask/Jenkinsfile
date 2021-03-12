@@ -1,0 +1,162 @@
+#!groovy
+
+// Run container based task
+
+@Library('hamlet-streams') _
+
+pipeline {
+    agent {
+        label 'hamlet-latest'
+    }
+
+    options {
+        durabilityHint('SURVIVABLE_NONATOMIC')
+        parallelsAlwaysFailFast()
+        skipDefaultCheckout()
+    }
+
+    parameters {
+        string(
+            name: 'ENVIRONMENT',
+            defaultValue: '',
+            description: 'Environment to target'
+        )
+        string(
+            name: 'SEGMENT',
+            defaultValue: '',
+            description: 'Segment to target'
+        )
+        string(
+            name: 'CLUSTER_TIER',
+            defaultValue: '',
+            description: 'ECS cluster tier'
+        )
+        string(
+            name: 'CLUSTER_COMPONENT',
+            defaultValue: '',
+            description: 'ECS cluster component'
+        )
+        string(
+            name: 'TASK_ID',
+            defaultValue: '',
+            description: 'ECS task'
+        )
+        string(
+            name: 'TASK_INSTANCE',
+            defaultValue: '',
+            description: 'ECS task instance'
+        )
+        string(
+            name: 'TASK_VERSION',
+            defaultValue: '',
+            description: 'ECS task version'
+        )
+        string(
+            name: 'TASK_CONTAINER',
+            defaultValue: '',
+            description: 'Container within ECS task'
+        )
+        string(
+            name: 'ACTION',
+            defaultValue: '',
+            description: 'Action to perform'
+        )
+        string(
+            name: 'CHANNELS',
+            defaultValue: '',
+            description: 'The channels for messages'
+        )
+    }
+
+    environment {
+        GITHUB_CREDENTIALS = credentials('github')
+
+        ENVIRONMENT = "${params.ENVIRONMENT}"
+        SEGMENT = "${params.SEGMENT}"
+
+        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+
+        CLUSTER = "${params.CLUSTER_TIER}-${params.CLUSTER_COMPONENT}"
+        TASK = "${params.TASK_ID}-${params.TASK_INSTANCE}-${params.TASK_VERSION}"
+    }
+
+    stages {
+        stage('Setup') {
+            steps {
+                script {
+                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT} - ${env.SEGMENT}"
+                    currentBuild.description = "Cluster: ${env.CLUSTER_TIER}, Task: ${env.TASK}, Container: ${params.TASK_CONTAINER}, Action: ${params.ACTION}"
+                }
+                loadCMDB()
+                loadProperties("${env.BASE_PROPERTIES}")
+                // Uncomment if not using an agent role - see repository README for more details
+                // setCloudProviderCredentials('aws')
+
+                sh '''#!/bin/bash
+                    ${AUTOMATION_BASE_DIR}/setContext.sh
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+
+                sh '''#!/bin/bash
+                    ${AUTOMATION_DIR}/constructTree.sh
+                '''
+
+                script {
+                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
+                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                }
+            }
+        }
+
+        stage('Execution') {
+            environment {
+                CLUSTER_TIER = "${params.CLUSTER_TIER}"
+                CLUSTER_COMPONENT = "${params.CLUSTER_COMPONENT}"
+                TASK_ID = "${params.TASK_ID}"
+                TASK_INSTANCE = "${params.TASK_INSTANCE}"
+                TASK_VERSION = "${params.TASK_VERSION}"
+                TASK_CONTAINER = "${params.TASK_CONTAINER}"
+                ACTION = "${params.ACTION}"
+            }
+
+            steps {
+                sh '''#!/bin/bash
+                ${GENERATION_DIR}/runTask.sh \
+                    -t "${CLUSTER_TIER}" -i "${CLUSTER_COMPONENT}" \
+                    -w "${TASK_ID}" -x "${TASK_INSTANCE}" -y "${TASK_VERSION}" -c "${TASK_CONTAINER}" \
+                    -e "APP_TASK_LIST" -v "${ACTION}"
+                '''
+            }
+        }
+    }
+
+    post {
+        success {
+            notifyContainerTaskSuccess(
+                params.ENVIRONMENT,
+                params.SEGMENT,
+                env.CLUSTER,
+                env.TASK,
+                params.TASK_CONTAINER,
+                params.ACTION,
+                params.CHANNELS
+            )
+        }
+
+        failure {
+            notifyContainerTaskFailure(
+                params.ENVIRONMENT,
+                params.SEGMENT,
+                env.CLUSTER,
+                env.TASK,
+                params.TASK_CONTAINER,
+                params.ACTION,
+                params.CHANNELS
+            )
+        }
+    }
+}

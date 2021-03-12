@@ -1,0 +1,44 @@
+<p>
+Send container task completed event notification to one or more collaboration channels
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>environment</dt>
+<dd>
+Environment
+</dd>
+<dt>segment</dt>
+<dd>
+Segment
+</dd>
+<dt>cluster</dt>
+<dd>
+The details in the solution for the ECS cluster hosting the task
+</dd>
+<dt>task</dt>
+<dd>
+The details in the solution for the task that was run
+</dd>
+<dt>container</dt>
+<dd>
+The name of the container in the task to run
+</dd>
+<dt>action</dt>
+<dd>
+The action the container task performed
+</dd>
+<dt>channels</dt>
+<dd>
+Channels to be notified - see notifyChannels for channel formats
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+this step is intended to be used in conjunction with the container task library block
+</li>
+</ul>
+</p>

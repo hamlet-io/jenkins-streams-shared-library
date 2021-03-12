@@ -1,0 +1,65 @@
+<p>
+Trigger the container task library block
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>jobBase</dt>
+<dd>
+Path to base of job tree for product
+</dd>
+<dt>environment</dt>
+<dd>
+Environment
+</dd>
+<dt>segment</dt>
+<dd>
+Segment
+</dd>
+<dt>clusterTier</dt>
+<dd>
+The tier in the solution for the ECS cluster hosting the task
+</dd>
+<dt>clusterComponent</dt>
+<dd>
+The component in the solution for the ECS cluster hosting the task
+</dd>
+<dt>taskId</dt>
+<dd>
+The id in the solution of the task to run
+</dd>
+<dt>taskInstance</dt>
+<dd>
+The instance in the solution of the task to run
+</dd>
+<dt>taskVersion</dt>
+<dd>
+The version in the solution of the task to run
+</dd>
+<dt>taskContainer</dt>
+<dd>
+The name of the container in the task to run
+</dd>
+</dd>
+<dt>action</dt>
+<dd>
+The action the container task should perform.
+It is passed as the environment variable <code>APP_TASK_LIST</code> to the
+container. Each container needs to define the purpose to which this variable is
+put, but it is commonly used as a semicolon separated list of commands for
+the container to process sequentially before it exits.
+</dd>
+<dt>channels</dt>
+<dd>
+Channels to be notified - see notifyChannels for channel formats
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+this step is intended to be used by stream jobs
+</li>
+</ul>
+</p>
