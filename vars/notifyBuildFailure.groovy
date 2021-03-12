@@ -7,7 +7,7 @@ def call(
 ) {
     notifyFailure(
         "Build Failed",
-        "Segment: ${segment}  \nUnit: ${deploymentUnits}  \nCommit: ${commit}",
+        "Segment: ${segment}  \nUnit: ${deploymentUnit}  \nCommit: ${commit}",
         channels
     )
 }
