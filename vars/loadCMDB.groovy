@@ -1,6 +1,7 @@
 // Load a product CMDB to get access to the stream pipelines
 def call(
-    String product_cmdb_url = ''
+    String product_cmdb_url = '',
+    String branch = 'master'
 ) {
     // Product Setup
     dir('.hamlet/product') {
@@ -15,6 +16,7 @@ def call(
                 // Need to load CMDB - don't include it in changelog calculations
                 git(
                     url: product_cmdb_url,
+                    branch: branch,
                     credentialsId: 'github',
                     changelog: false,
                     poll: false

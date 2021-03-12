@@ -9,6 +9,10 @@ Clone the product CMDB into a reserved location in the workspace.
 The full URL to the git repository for the product. If blank, the repo is assumed to be configured on the job itself so
 a checkout is performed. If not blank, the repository is checked out.
 </dd>
+<dt>branch</dt>
+<dd>
+The branch to be loaded. By default <code>master</code> is used.
+</dd>
 </dl>
 </p>
 <em>Notes</em>
