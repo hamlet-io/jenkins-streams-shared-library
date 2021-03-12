@@ -18,7 +18,7 @@ def call(
                 string(name: 'DEPLOYMENT_GROUP', value: group),
                 string(name: 'DEPLOYMENT_UNITS', value: deploymentUnits),
                 string(name: 'CODE_UNITS', value: codeUnits),
-                string(name: 'GIT_COMMIT', value: commit)
+                string(name: 'GIT_COMMIT', value: commit),
                 string(name: 'CODE_TAG', value: tag),
                 string(name: 'RELEASE_IDENTIFIER', value: (release == '') ? tag : release)
             ]
