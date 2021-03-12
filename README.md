@@ -46,7 +46,7 @@ All jobs for a product are assumed to live under a "jobBase" path within the Jen
 
 Stream jobs are then expected to live under a `streams` folder, while library block jobs live under a `library` folder.
 
-While no constraint is placed on the location of build jobs and the management jobs within Jenkins, by convention they live under the `build` and `manage` folders respectively. A further useful convention is for each code repository to have a job (if one Jenkinsfile in the code repository) or a folder (if more than one Jenkinsfile) under the `build` folder. This makes it easy to identify job(s) specific to the repository of interest.
+While no constraint is placed on the location of build jobs and the management jobs within Jenkins, by convention they live under the `builds` and `manage` folders respectively. A further useful convention is for each code repository to have a job (if one Jenkinsfile in the code repository) or a folder (if more than one Jenkinsfile) under the `builds` folder. This makes it easy to identify job(s) specific to the repository of interest.
 
 ## Library Blocks
 
