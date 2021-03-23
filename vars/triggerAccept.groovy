@@ -9,7 +9,7 @@ def call(
     String channels
 ) {
     script {
-        build job: "${jobBase}/library/deploy",
+        build job: "${jobBase}/library/accept",
             wait: true,
             parameters: [
                 string(name: 'ENVIRONMENT', value: environment),

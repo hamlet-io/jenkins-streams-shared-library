@@ -129,7 +129,6 @@ pipeline {
                 params.CODE_TAG,
                 params.CHANNELS
             )
-
         }
 
         failure {
