@@ -4,6 +4,10 @@ Send manage success event notification to one or more collaboration channels
 <em>Parameters</em>
 <p>
 <dl>
+<dt>deploymentMode</dt>
+<dd>
+Mode applied to all units
+</dd>
 <dt>environment</dt>
 <dd>
 Environment

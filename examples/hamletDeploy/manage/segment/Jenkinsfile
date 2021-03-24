@@ -149,6 +149,7 @@ pipeline {
             steps {
                 triggerManage(
                     env.JOB_BASE,
+                    env.DEPLOYMENT_MODE,
                     env.ENVIRONMENT,
                     env.SEGMENT,
                     env.LEVELS_LIST,

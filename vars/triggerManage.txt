@@ -8,6 +8,10 @@ Trigger the manage library block
 <dd>
 Path to base of job tree for product
 </dd>
+<dt>deploymentMode</dt>
+<dd>
+Mode to apply to all units
+</dd>
 <dt>environment</dt>
 <dd>
 Environment

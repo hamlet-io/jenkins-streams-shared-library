@@ -17,6 +17,11 @@ pipeline {
 
     parameters {
         string(
+            name: 'DEPLOYMENT_MODE',
+            defaultValue: 'update',
+            description: 'Mode to apply to all units'
+        )
+        string(
             name: 'ENVIRONMENT',
             defaultValue: '',
             description: 'Environment to target'
@@ -72,7 +77,7 @@ pipeline {
             steps {
                 script {
                     currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
-                    currentBuild.description = "Levels: ${params.LEVELS_LIST}, SegmentUnits: ${params.SEGMENT_UNITS_LIST}, SolutionUnits: ${params.SOLUTION_UNITS_LIST}, ApplicationUnits: ${params.APPLICATION_UNITS_LIST}"
+                    currentBuild.description = "Mode: ${params.DEPLOYMENT_MODE}, Levels: ${params.LEVELS_LIST}, SegmentUnits: ${params.SEGMENT_UNITS_LIST}, SolutionUnits: ${params.SOLUTION_UNITS_LIST}, ApplicationUnits: ${params.APPLICATION_UNITS_LIST}"
 
                     params.each{ k, v -> env["${k}"] ="${v}" }
                 }
@@ -118,6 +123,7 @@ pipeline {
     post {
         success {
             notifyManageSuccess(
+                params.DEPLOYMENT_MODE,
                 params.ENVIRONMENT,
                 params.SEGMENT,
                 params.LEVELS_LIST,
@@ -130,6 +136,7 @@ pipeline {
 
         failure {
             notifyManageFailure(
+                params.DEPLOYMENT_MODE,
                 params.ENVIRONMENT,
                 params.SEGMENT,
                 params.LEVELS_LIST,

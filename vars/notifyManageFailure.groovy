@@ -1,5 +1,6 @@
 // Notify of failure of manage segment
 def call(
+    String deploymentMode,
     String environment,
     String segment,
     String levels,
@@ -10,7 +11,7 @@ def call(
 ) {
     notifyFailure(
         "Manage Environment Failed",
-        "Environment: ${environment}  \nSegment: ${segment}  \nLevels: ${levels}  \nSegmentUnits: ${segmentUnits}  \nSolutionUnits: ${solutionUnits}  \nApplicationUnits: ${applicationUnits}",
+        "Mode: ${deploymentMode}  \nEnvironment: ${environment}  \nSegment: ${segment}  \nLevels: ${levels}  \nSegmentUnits: ${segmentUnits}  \nSolutionUnits: ${solutionUnits}  \nApplicationUnits: ${applicationUnits}",
         channels
     )
 }
