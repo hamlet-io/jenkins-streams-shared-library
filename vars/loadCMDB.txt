@@ -13,6 +13,10 @@ a checkout is performed. If not blank, the repository is checked out.
 <dd>
 The branch to be loaded. By default <code>master</code> is used.
 </dd>
+<dt>credential</dt>
+<dd>
+The id of the jenkins credential to use to access the git provider. By default <code>github</code> is used.
+</dd>
 </dl>
 </p>
 <em>Notes</em>
