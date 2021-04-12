@@ -53,12 +53,10 @@ pipeline {
     }
 
     environment {
-        GITHUB_CREDENTIALS = credentials('github')
-
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
     }
 
     stages {
@@ -70,9 +68,16 @@ pipeline {
                 }
                 loadCMDB()
                 loadProperties("${env.BASE_PROPERTIES}")
-                // Uncomment if not using an agent role - see repository README for more details
-                // setCloudProviderCredentials('aws')
+                setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
+            }
+        }
 
+        stage('Base-Deploy') {
+            environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+            }
+
+            steps {
                 sh '''#!/bin/bash
                     ${AUTOMATION_BASE_DIR}/setContext.sh
                 '''
@@ -107,6 +112,10 @@ pipeline {
                 equals expected: '', actual: params.RELEASE_IDENTIFIER
             }
 
+            environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+            }
+
             steps {
                 sh '''#!/bin/bash
                     ${AUTOMATION_DIR}/deploy.sh
@@ -122,6 +131,7 @@ pipeline {
             }
 
             environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
                 RELEASE_IDENTIFIER = "${params.RELEASE_IDENTIFIER}"
             }
 

@@ -63,13 +63,10 @@ pipeline {
     }
 
     environment {
-        GITHUB_CREDENTIALS = credentials('github')
-
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
-
+        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
     }
 
     stages {
@@ -82,13 +79,16 @@ pipeline {
                     params.each{ k, v -> env["${k}"] ="${v}" }
                 }
                 loadCMDB()
-                loadProperties("${env.BASE_PROPERTIES}")
-                // Uncomment if not using an agent role - see repository README for more details
-                // setCloudProviderCredentials('aws')
+                loadProperties("${env.base_properties}")
+                setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
             }
         }
 
         stage('Manage') {
+            environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+            }
+
             steps {
                 sh '''#!/bin/bash
                     ${AUTOMATION_BASE_DIR}/setContext.sh

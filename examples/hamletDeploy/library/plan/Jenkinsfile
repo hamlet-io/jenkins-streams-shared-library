@@ -63,12 +63,10 @@ pipeline {
     }
 
     environment {
-        GITHUB_CREDENTIALS = credentials('github')
-
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
     }
 
     stages {
@@ -79,13 +77,16 @@ pipeline {
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}, Tag: ${params.CODE_TAG}"
                 }
                 loadCMDB()
-                loadProperties("${env.BASE_PROPERTIES}")
-                // Uncomment if not using an agent role - see repository README for more details
-                // setCloudProviderCredentials('aws')
+                loadProperties("${env.base_properties}")
+                setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
             }
         }
 
         stage('Update') {
+            environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+            }
+
             steps {
                 sh '''#!/bin/bash
                     ${AUTOMATION_BASE_DIR}/setContext.sh
@@ -124,6 +125,10 @@ pipeline {
         }
 
         stage('Deploy') {
+            environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+            }
+
             steps {
                 echo "Plan deploy not yet implemented"
             }

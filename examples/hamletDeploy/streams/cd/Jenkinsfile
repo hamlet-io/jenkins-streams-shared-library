@@ -53,9 +53,9 @@ pipeline {
     }
 
     environment {
-        PARTITION = "${env.JOB_NAME}".split('/').first()
-        JOB_BASE = "/" + "${env.PARTITION}"
-        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
+        partition = "${env.JOB_NAME}".split('/').first()
+        job_base = "/" + "${env.partition}"
+        base_properties = "${env.partition}".toLowerCase()
     }
 
     stages {
@@ -68,7 +68,7 @@ pipeline {
                 stage ('ENV1 Deploy') {
                     steps {
                         // Standard block for all stages so can restart at any stage
-                        loadProperties("${env.BASE_PROPERTIES}", 'true')
+                        loadProperties("${env.base_properties}", 'true')
                         script {
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
                             env.channels = "${env.TEAMS_ENV1}, ${env.SLACK_ENV1}"
@@ -76,7 +76,7 @@ pipeline {
 
                         // Update build references
                         triggerUpdate(
-                            env.JOB_BASE,
+                            env.job_base,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -88,7 +88,7 @@ pipeline {
 
                         // Perform deployment
                         triggerDeploy(
-                            env.JOB_BASE,
+                            env.job_base,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,

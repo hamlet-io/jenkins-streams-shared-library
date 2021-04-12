@@ -69,12 +69,10 @@ pipeline {
     }
 
     environment {
-        GITHUB_CREDENTIALS = credentials('github')
-
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
 
         CLUSTER = "${params.CLUSTER_TIER}-${params.CLUSTER_COMPONENT}"
         TASK = "${params.TASK_ID}-${params.TASK_INSTANCE}-${params.TASK_VERSION}"
@@ -88,9 +86,17 @@ pipeline {
                     currentBuild.description = "Cluster: ${env.CLUSTER_TIER}, Task: ${env.TASK}, Container: ${params.TASK_CONTAINER}, Action: ${params.ACTION}"
                 }
                 loadCMDB()
-                loadProperties("${env.BASE_PROPERTIES}")
-                // Uncomment if not using an agent role - see repository README for more details
-                // setCloudProviderCredentials('aws')
+                loadProperties("${env.base_properties}")
+                setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
+            }
+        }
+
+        stage('Load') {
+            environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+            }
+
+            steps {
 
                 sh '''#!/bin/bash
                     ${AUTOMATION_BASE_DIR}/setContext.sh
@@ -121,6 +127,8 @@ pipeline {
                 TASK_VERSION = "${params.TASK_VERSION}"
                 TASK_CONTAINER = "${params.TASK_CONTAINER}"
                 ACTION = "${params.ACTION}"
+
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
             }
 
             steps {

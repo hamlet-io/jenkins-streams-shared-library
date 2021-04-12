@@ -54,15 +54,13 @@ pipeline {
     }
 
     environment {
-        GITHUB_CREDENTIALS = credentials('github')
-
         FROM_ENVIRONMENT = "${params.FROM_ENVIRONMENT}"
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
         DEPLOYMENT_UNITS = "${params.CODE_UNITS}"
         GIT_COMMIT = "${params.GIT_COMMIT}"
 
-        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
     }
 
     stages {
@@ -73,14 +71,14 @@ pipeline {
                     currentBuild.description = "FromEnvironment: ${params.FROM_ENVIRONMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.CODE_UNITS}, Commit: ${params.GIT_COMMIT}"
                 }
                 loadCMDB()
-                loadProperties("${env.BASE_PROPERTIES}")
-                // Uncomment if not using an agent role - see repository README for more details
-                // setCloudProviderCredentials('aws')
+                loadProperties("${env.base_properties}")
+                setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
             }
         }
 
         stage('Transfer') {
             environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
                 APPLY_TO_ALL_DEPLOYMENT_UNITS = "true"
             }
 

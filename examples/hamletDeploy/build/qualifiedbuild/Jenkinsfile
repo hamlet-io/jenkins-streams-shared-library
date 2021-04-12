@@ -52,25 +52,26 @@ pipeline {
     }
 
     environment {
-        // Config to obtain product level properties
-        product_cmdb_url = '<repo url>'
-
-        GITHUB_CREDENTIALS = credentials('github')
+        // Redefine a few properties as the job is based on a code repo not the cmdb
+        // so these are needed to access the properties in the cmdb.
+        PRODUCT_CONFIG_REPO_URL = '<repo url>'
+        PRODUCT_CONFIG_REPO_BRANCH = '<repo branch>'
+        GIT_CREDENTIALS_ID = '<git credential id>'
 
         // Segment to be built
-        REGISTRY_SCOPE='segment'
+        registry_scope='segment'
         SEGMENT='<targetted segment>'
 
         // Build qualifier used on CI targets
-        BUILD_QUALIFIER='internal'
+        build_qualifier='internal'
 
         // Deployment triggers
         cd_branch='stagetoaws'
-        continuous_tag="^v\\d+\\.\\d+\\.\\d+-continuous(\\+${env.BUILD_QUALIFIER})?\$"
-        release_tag="^v\\d+\\.\\d+\\.\\d+(-release)?(\\+${env.BUILD_QUALIFIER})?\$"
+        continuous_tag="^v\\d+\\.\\d+\\.\\d+-continuous(\\+${env.build_qualifier})?\$"
+        release_tag="^v\\d+\\.\\d+\\.\\d+(-release)?(\\+${env.build_qualifier})?\$"
 
         // Group being built
-        DEPLOYMENT_GROUP='application'
+        deployment_group='application'
 
         // The version selected needs to be supported in nodenv - check the
         // build output for a list of supported versions if the one selected
@@ -81,9 +82,9 @@ pipeline {
         referenceJobName="<path to build job for cd branch>"
 
         // Paths to jobs
-        PARTITION = "${env.JOB_NAME}".split('/').first()
-        JOB_BASE = "/" + "${env.PARTITION}"
-        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
+        partition = "${env.JOB_NAME}".split('/').first()
+        job_base = "/" + "${env.partition}"
+        base_properties = "${env.partition}".toLowerCase()
     }
 
     stages {
@@ -108,11 +109,10 @@ pipeline {
                 installNode("${node_version}")
 
                 // Load the product properties
-                loadCMDB(env.product_cmdb_url)
-                loadProperties("${env.BASE_PROPERTIES}")
+                loadCMDB(env.PRODUCT_CONFIG_REPO_URL, env.PRODUCT_CONFIG_REPO_BRANCH, env.GIT_CREDENTIALS_ID)
+                loadProperties("${env.base_properties}")
 
-                // Uncomment if not using an agent role - see repository README for more details
-                // setCloudProviderCredentials('aws')
+                setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
 
                 // Where to send build messages
                 script {
@@ -204,13 +204,13 @@ pipeline {
 
                     steps {
                         dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
-                            runNPMTargets( "clean,build:${env.BUILD_QUALIFIER}" )
+                            runNPMTargets( "clean,build:${env.build_qualifier}" )
                             runNPMTargets( "${env.IMAGE_FORMATS}" )
                         }
 
                         uploadArtifactsToRegistry(
                             env.PRIMARY_DEPLOYMENT_UNIT,
-                            env.REGISTRY_SCOPE,
+                            env.registry_scope,
                             env.IMAGE_FORMATS,
                             env.GIT_COMMIT
                         )
@@ -251,10 +251,10 @@ pipeline {
 
                     steps {
                         triggerStream(
-                            env.JOB_BASE,
+                            env.job_base,
                             env.DEPLOYMENT_STREAM,
                             env.SEGMENT,
-                            env.DEPLOYMENT_GROUP,
+                            env.deployment_group,
                             "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
                             env.PRIMARY_DEPLOYMENT_UNIT,
                             env.GIT_COMMIT
@@ -266,7 +266,7 @@ pipeline {
                             notifyTriggerStreamFailure(
                                 env.DEPLOYMENT_STREAM,
                                 env.SEGMENT,
-                                env.DEPLOYMENT_GROUP,
+                                env.deployment_group,
                                 "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
                                 env.PRIMARY_DEPLOYMENT_UNIT,
                                 env.GIT_COMMIT,
@@ -327,13 +327,13 @@ pipeline {
 
                     steps {
                         dir("build/${BUILD_PATH}") {
-                            runNPMTargets( "clean, generate:${env.BUILD_QUALIFIER}" )
+                            runNPMTargets( "clean, generate:${env.build_qualifier}" )
                             buildOpenapi( "${env.IMAGE_FORMATS}" )
                         }
 
                         uploadArtifactsToRegistry(
                             env.PRIMARY_DEPLOYMENT_UNIT,
-                            env.REGISTRY_SCOPE,
+                            env.registry_scope,
                             env.IMAGE_FORMATS,
                             env.GIT_COMMIT
                         )
@@ -397,10 +397,10 @@ pipeline {
 
                     steps {
                         triggerStream(
-                            env.JOB_BASE,
+                            env.job_base,
                             env.DEPLOYMENT_STREAM,
                             env.SEGMENT,
-                            env.DEPLOYMENT_GROUP,
+                            env.deployment_group,
                             "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
                             env.PRIMARY_DEPLOYMENT_UNIT,
                             env.GIT_COMMIT
@@ -412,7 +412,7 @@ pipeline {
                             notifyTriggerStreamFailure(
                                 env.DEPLOYMENT_STREAM,
                                 env.SEGMENT,
-                                env.DEPLOYMENT_GROUP,
+                                env.deployment_group,
                                 "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
                                 env.PRIMARY_DEPLOYMENT_UNIT,
                                 env.GIT_COMMIT,
@@ -509,14 +509,14 @@ pipeline {
 
                     steps {
                         dir("build/${BUILD_PATH}/${BUILD_SRC_DIR}") {
-                            runNPMTargets( "clean,generate:${env.BUILD_QUALIFIER}" )
-                            runNPMTargetWithNodeOptions("build:${env.BUILD_QUALIFIER}")
+                            runNPMTargets( "clean,generate:${env.build_qualifier}" )
+                            runNPMTargetWithNodeOptions("build:${env.build_qualifier}")
                             runNPMTargets( "${env.IMAGE_FORMATS}" )
                         }
 
                         uploadArtifactsToRegistry(
                             env.PRIMARY_DEPLOYMENT_UNIT,
-                            env.REGISTRY_SCOPE,
+                            env.registry_scope,
                             env.IMAGE_FORMATS,
                             env.GIT_COMMIT
                         )
@@ -556,10 +556,10 @@ pipeline {
 
                     steps {
                         triggerStream(
-                            env.JOB_BASE,
+                            env.job_base,
                             env.DEPLOYMENT_STREAM,
                             env.SEGMENT,
-                            env.DEPLOYMENT_GROUP,
+                            env.deployment_group,
                             "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
                             env.PRIMARY_DEPLOYMENT_UNIT,
                             env.GIT_COMMIT
@@ -571,7 +571,7 @@ pipeline {
                             notifyTriggerStreamFailure(
                                 env.DEPLOYMENT_STREAM,
                                 env.SEGMENT,
-                                env.DEPLOYMENT_GROUP,
+                                env.deployment_group,
                                 "${env.PRIMARY_DEPLOYMENT_UNIT} ${env.SECONDARY_DEPLOYMENT_UNITS}",
                                 env.PRIMARY_DEPLOYMENT_UNIT,
                                 env.GIT_COMMIT,
@@ -600,10 +600,10 @@ pipeline {
                 loadProperties(env.SEGMENT)
 
                 triggerStream(
-                    env.JOB_BASE,
+                    env.job_base,
                     env.DEPLOYMENT_STREAM,
                     env.SEGMENT,
-                    env.DEPLOYMENT_GROUP,
+                    env.deployment_group,
                     "${env.RELEASE_DEPLOYMENT_UNITS}",
                     "${env.RELEASE_CODE_UNITS}",
                     env.GIT_COMMIT,
@@ -617,7 +617,7 @@ pipeline {
                     notifyTriggerStreamFailure(
                         env.DEPLOYMENT_STREAM,
                         env.SEGMENT,
-                        env.DEPLOYMENT_GROUP,
+                        env.deployment_group,
                         "${env.RELEASE_DEPLOYMENT_UNITS}",
                         "${env.RELEASE_CODE_UNITS}",
                         env.GIT_COMMIT,
@@ -644,10 +644,10 @@ pipeline {
                 loadProperties(env.SEGMENT)
 
                 triggerStream(
-                    env.JOB_BASE,
+                    env.job_base,
                     env.DEPLOYMENT_STREAM,
                     env.SEGMENT,
-                    env.DEPLOYMENT_GROUP,
+                    env.deployment_group,
                     "${env.RELEASE_DEPLOYMENT_UNITS}",
                     "${env.RELEASE_CODE_UNITS}",
                     env.GIT_COMMIT,
@@ -660,7 +660,7 @@ pipeline {
                     notifyTriggerStreamFailure(
                         env.DEPLOYMENT_STREAM,
                         env.SEGMENT,
-                        env.DEPLOYMENT_GROUP,
+                        env.deployment_group,
                         "${env.RELEASE_DEPLOYMENT_UNITS}",
                         "${env.RELEASE_CODE_UNITS}",
                         env.GIT_COMMIT,
