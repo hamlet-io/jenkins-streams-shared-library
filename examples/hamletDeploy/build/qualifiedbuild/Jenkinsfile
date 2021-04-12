@@ -671,10 +671,4 @@ pipeline {
             }
         }
     }
-
-    post {
-        cleanup {
-            cleanWs()
-        }
-    }
 }

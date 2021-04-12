@@ -16,7 +16,7 @@ def call(
             automationUser = 'HAMLET'
             env[automationUserEnvVar] = automationUser
         }
-        if (automationUser != 'ROLE') {
+        if ((credentialsId != '') && (automationUser != 'ROLE')) {
             // Product Setup
             withCredentials([usernamePassword(credentialsId: credentialsId, usernameVariable: 'ACCESS_KEY', passwordVariable: 'SECRET_KEY' )]) {
                 env["${automationUser}_AWS_ACCESS_KEY_ID"] = "${ACCESS_KEY}"

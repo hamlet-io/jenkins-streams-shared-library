@@ -2,7 +2,7 @@
 def call(
     String product_cmdb_url = '',
     String branch = 'master',
-    String credential = 'github'
+    String credentialsId = 'github'
 ) {
     // Product Setup
     dir('.hamlet/product') {
@@ -18,7 +18,7 @@ def call(
                 git(
                     url: product_cmdb_url,
                     branch: branch,
-                    credentialsId: credential,
+                    credentialsId: credentialsId,
                     changelog: false,
                     poll: false
                 )

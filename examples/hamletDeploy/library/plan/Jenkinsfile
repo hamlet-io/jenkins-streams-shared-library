@@ -141,10 +141,4 @@ pipeline {
             }
         }
     }
-
-    post {
-        cleanup {
-            cleanWs()
-        }
-    }
 }

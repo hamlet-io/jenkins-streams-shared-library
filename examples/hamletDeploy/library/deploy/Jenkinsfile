@@ -156,9 +156,5 @@ pipeline {
                 params.CHANNELS
             )
         }
-
-        cleanup {
-            cleanWs()
-        }
     }
 }
