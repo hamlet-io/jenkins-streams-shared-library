@@ -70,6 +70,7 @@ pipeline {
                         // Standard block for all stages so can restart at any stage
                         loadProperties("${env.base_properties}", 'true')
                         script {
+                            currentBuild.displayName = "${params.SEGMENT}"
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
                             env.channels = "${env.TEAMS_ENV1}, ${env.SLACK_ENV1}"
                         }
