@@ -20,13 +20,17 @@ The registries to which the image should be uploaded.
 <dd>
 The commit hash from which the artifact was built.
 </dd>
+<dt>image_paths</dt>
+<dd>
+The paths to the images for each format that you want to create
+</dd>
 </dl>
 </p>
 <em>Notes</em>
 <p>
 <ul>
 <li>
-this step assumes the artifact is in zip format and named according to the image formats provided e.g. <code>lambda.zip</code>
+<code>The path can either be to a directory or to a zip file. If a directory is provided it will be zipped to create the image</code>
 </li>
 </ul>
 </p>
