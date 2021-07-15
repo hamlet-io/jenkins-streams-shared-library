@@ -1,0 +1,28 @@
+<p>
+Set the engine to use for all hamlet commands
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>engine</dt>
+<dd>
+The desired hamlet engine to use
+To find available engines install hamlet and run
+<code>
+hamlet engine list-engines
+<code>
+</dd>
+</dl>
+</p>
+<em>Notes</em>
+<p>
+<ul>
+<li>
+Named engines include
+<ul>
+<li>unicycle - the latest version of hamlet available</li>
+<li>tram - the latest tested nightly build of hamlet</li>
+<li>train - the latest stable release of hamlet</li>
+</li>
+</ul>
+</p>
