@@ -34,7 +34,7 @@ def call(
                 image_args+=("-i" "${upload_image_paths[i]}")
             fi
 
-            ${AUTOMATION_DIR}/manageImages.sh -u "${upload_deployment_unit}" -c "${upload_scope}" -f "${upload_image_formats[i],,}" -g "${upload_git_commit}" "${image_args[@]} || exit $?
+            ${AUTOMATION_DIR}/manageImages.sh -u "${upload_deployment_unit}" -c "${upload_scope}" -f "${upload_image_formats[i],,}" -g "${upload_git_commit}" "${image_args[@]}" || exit $?
         done
     '''
 }
