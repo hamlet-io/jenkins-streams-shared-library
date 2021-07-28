@@ -4,7 +4,7 @@ def call(
     String scope,
     String image_formats,
     String git_commit,
-    String image_paths = "",
+    String image_paths = ""
 ) {
     // Inject parameters into the environment for the script steps
     // Variable names are treated as case insensitive so rename to avoid overwriting existing
