@@ -27,6 +27,12 @@ def call(
     }
 
     sh '''#!/bin/bash
+        # Compensate for Jenkinsfile behaviour where setting an environment variable to an
+        # empty string results in a value of null being returned
+        if [[ "${upload_scope}" == "null" ]]; then
+          upload_scope=""
+        fi
+
         for i in "${!upload_image_formats[@]}"; do
             image_args=()
 
