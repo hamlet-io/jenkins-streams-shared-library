@@ -77,6 +77,7 @@ pipeline {
 
         stage('Update') {
             environment {
+                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
                 APPLY_TO_ALL_DEPLOYMENT_UNITS = "true"
             }
 
