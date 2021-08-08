@@ -69,6 +69,7 @@ pipeline {
                 loadCMDB()
                 loadProperties("${env.BASE_PROPERTIES}")
                 setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
+                setHamletEngine("${HAMLET_ENGINE}")
             }
         }
 
