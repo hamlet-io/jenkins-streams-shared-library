@@ -7,7 +7,7 @@ def call(
     }
     sh '''#!/bin/bash
     for run_target in ${run_targets}; do
-        yarn run "ci:${run_target,,}"
+        yarn run "ci:${run_target,,}" || exit $?
     done
     '''
 }
