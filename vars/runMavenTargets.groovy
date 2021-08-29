@@ -9,7 +9,7 @@ def call(
     sh '''#!/bin/bash
     . ${WORKSPACE}/tools/maven.sh
     for run_target in ${run_targets}; do
-        mvn "${run_target}"
+        mvn "${run_target}" || exit $?
     done
     '''
 }

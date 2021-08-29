@@ -7,7 +7,7 @@ def call(
     }
     sh '''#!/bin/bash
     for run_target in ${run_targets}; do
-        npm run "ci:${run_target,,}"
+        npm run "ci:${run_target,,}" || exit $?
     done
     '''
 }
