@@ -88,7 +88,7 @@ pipeline {
                 loadCMDB()
                 loadProperties("${env.base_properties}")
                 setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
-                setHamletEngine("${HAMLET_ENGINE}")
+                setHamletEngine("${HAMLET_ENGINE}", true)
             }
         }
 
@@ -116,6 +116,10 @@ pipeline {
                     def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
                     contextProperties.each{ k, v -> env["${k}"] ="${v}" }
                 }
+
+                sh '''#!/bin/bash
+                    ${GENERATION_DIR}/setup.sh
+                '''
             }
         }
 
