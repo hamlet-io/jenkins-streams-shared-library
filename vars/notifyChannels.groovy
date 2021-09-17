@@ -18,7 +18,7 @@ def call(
                 )
             }
 
-            if (channel.startsWith("https://outlook.office.com/webhook/")) {
+            if (channel.indexOf("office.com") != -1) {
                 // Standard Office 365 format includes JOB NAME and BUILD_URL
                 office365ConnectorSend (
                     message: "**${title}** | ${BUILD_DISPLAY_NAME}  \n${message}",
@@ -29,4 +29,3 @@ def call(
         }
     }
 }
-
