@@ -17,7 +17,7 @@ The detail of the notification
 A comma separated list of channels. Currently accepted formats are
 <ul>
 <li>slack channels (recognised as starting with a "<code>#</code>")</li>
-<li>Office Teams (recognised as starting with "<code>https://outlook.office.com/webhook/</code>")</li>
+<li>Office Teams (recognised as containing "<code>office.com</code>")</li>
 </ul>
 </dd>
 <dt>colour</dt>
