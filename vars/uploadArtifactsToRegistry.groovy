@@ -15,6 +15,7 @@ def call(
         env['upload_image_formats'] = image_formats
         env['upload_git_commit'] = git_commit
         env['upload_image_paths'] = image_paths
+        env['upload_segment'] = env.SEGMENT
     }
 
     sh '''#!/bin/bash
@@ -24,6 +25,9 @@ def call(
     script {
         def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
         contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+
+        // Restore segment if redefined by setContext.sh
+        env['SEGMENT'] = env['upload_segment']
     }
 
     sh '''#!/bin/bash
