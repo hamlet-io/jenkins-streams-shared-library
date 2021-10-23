@@ -1,9 +1,11 @@
 // Set the node environment to the version specified
 def call(
-    String version
+    String version,
+    String scope = "global"
 ) {
     script {
         env['required_nodejs_version'] = version
+        env['required_scope'] = scope
     }
 
     // The agent may already have the required version installed
@@ -12,7 +14,11 @@ def call(
         if [[ ! ("${current_nodejs_version}" =~ ${required_nodejs_version}) ]]; then
             nodenv install "${required_nodejs_version}" ||
                 { nodenv install --list; exit 1; }
-            nodenv global  "${required_nodejs_version}" || exit $?
+            case ${required_scope} in
+              global|local)
+                nodenv ${required_scope} "${required_nodejs_version}" || exit $?
+                ;;
+            esac
         fi
         nodenv version || exit $?
     '''

@@ -9,6 +9,13 @@ Install a version of python.
 The desired version. Version must be supported by <code>pyenv</code>
 </dd>
 </dl>
+<dl>
+<dt>scope</dt>
+<dd>
+The desired scoping for the installation. Possible values are "global" and "local".
+Any other value will be ignored, meaning the version will be installed but not activated.
+</dd>
+</dl>
 </p>
 <em>Notes</em>
 <p>
