@@ -59,7 +59,7 @@ pipeline {
         DEPLOYMENT_UNITS = "${params.CODE_UNITS}"
         GIT_COMMIT = "${params.GIT_COMMIT}"
 
-        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
     }
 
     stages {
@@ -70,7 +70,7 @@ pipeline {
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.CODE_UNITS}, Commit: ${params.GIT_COMMIT}, Tag: ${params.CODE_TAG}"
                 }
                 loadCMDB()
-                loadProperties("${env.base_properties}")
+                loadProperties("${env.BASE_PROPERTIES}")
                 setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
                 setHamletEngine("${HAMLET_ENGINE}", true)
             }

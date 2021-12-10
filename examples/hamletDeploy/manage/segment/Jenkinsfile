@@ -19,16 +19,16 @@ pipeline {
         PRODUCT_CONFIG_REFERENCE = 'master'
         MODE = 'update'
 
-        partition = "${env.JOB_NAME}".split('/').first()
-        job_base = "/" + "${env.partition}"
-        base_properties = "${env.partition}".toLowerCase()
+        PARTITION = "${env.JOB_NAME}".split('/').first()
+        JOB_BASE = "/" + "${env.PARTITION}"
+        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
     }
 
     stages {
 
         stage('Get Input') {
             steps {
-                loadProperties("${env.base_properties}", 'true')
+                loadProperties("${env.BASE_PROPERTIES}", 'true')
 
                 script {
                     if (env.SEGMENT_LIST) {
@@ -148,7 +148,7 @@ pipeline {
         stage('Manage') {
             steps {
                 triggerManage(
-                    env.job_base,
+                    env.JOB_BASE,
                     env.DEPLOYMENT_MODE,
                     env.ENVIRONMENT,
                     env.SEGMENT,

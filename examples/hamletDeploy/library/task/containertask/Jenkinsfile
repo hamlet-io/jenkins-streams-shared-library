@@ -72,7 +72,7 @@ pipeline {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
 
         CLUSTER = "${params.CLUSTER_TIER}-${params.CLUSTER_COMPONENT}"
         TASK = "${params.TASK_ID}-${params.TASK_INSTANCE}-${params.TASK_VERSION}"
@@ -86,7 +86,7 @@ pipeline {
                     currentBuild.description = "Cluster: ${env.CLUSTER_TIER}, Task: ${env.TASK}, Container: ${params.TASK_CONTAINER}, Action: ${params.ACTION}"
                 }
                 loadCMDB()
-                loadProperties("${env.base_properties}")
+                loadProperties("${env.BASE_PROPERTIES}")
                 setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
                 setHamletEngine("${HAMLET_ENGINE}", true)
             }

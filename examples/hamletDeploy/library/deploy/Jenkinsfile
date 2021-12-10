@@ -56,7 +56,7 @@ pipeline {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
     }
 
     stages {

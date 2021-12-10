@@ -52,9 +52,9 @@ pipeline {
     }
 
     environment {
-        partition = "${env.JOB_NAME}".split('/').first()
-        job_base = "/" + "${env.partition}"
-        base_properties = "${env.partition}".toLowerCase()
+        PARTITION = "${env.JOB_NAME}".split('/').first()
+        JOB_BASE = "/" + "${env.PARTITION}"
+        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
     }
 
     stages {
@@ -67,7 +67,7 @@ pipeline {
                 stage('ENV2 Plan') {
                     steps {
                         // Standard block for all stages so can restart at any stage
-                        loadProperties("${env.base_properties}", 'true')
+                        loadProperties("${env.BASE_PROPERTIES}", 'true')
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
@@ -76,7 +76,7 @@ pipeline {
 
                         // Generate plan that can be checked before deployment
                         triggerPlan(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -126,7 +126,7 @@ pipeline {
                     steps {
                         // Update build references
                         triggerUpdate(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -138,7 +138,7 @@ pipeline {
 
                         // Perform deployment
                         triggerDeploy(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -186,7 +186,7 @@ pipeline {
                     steps {
                         // Accept changes
                         triggerAccept(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -208,7 +208,7 @@ pipeline {
                 stage('ENV3 Plan') {
                     steps {
                         // Standard block for all stages so can restart at any stage
-                        loadProperties("${env.base_properties}", 'true')
+                        loadProperties("${env.BASE_PROPERTIES}", 'true')
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
@@ -217,7 +217,7 @@ pipeline {
 
                         // Generate plan that can be checked before deployment
                         triggerPlan(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -267,7 +267,7 @@ pipeline {
                     steps {
                         // Update build references
                         triggerUpdate(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -279,7 +279,7 @@ pipeline {
 
                         // Perform deployment
                         triggerDeploy(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -327,7 +327,7 @@ pipeline {
                     steps {
                         // Accept changes
                         triggerAccept(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -350,7 +350,7 @@ pipeline {
                 stage('Production Plan') {
                     steps {
                         // Standard block for all stages so can restart at any stage
-                        loadProperties("${env.base_properties}", 'true')
+                        loadProperties("${env.BASE_PROPERTIES}", 'true')
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
@@ -359,7 +359,7 @@ pipeline {
 
                         // Generate plan that can be checked before deployment
                         triggerPlan(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -409,7 +409,7 @@ pipeline {
                     steps {
                         // Transfer builds
                         triggerTransfer(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.FROM_ENVIRONMENT,
                             env.ENVIRONMENT,
                             params.SEGMENT,
@@ -421,7 +421,7 @@ pipeline {
 
                         // Update build references
                         triggerUpdate(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,
@@ -433,7 +433,7 @@ pipeline {
 
                         // Perform deployment
                         triggerDeploy(
-                            env.job_base,
+                            env.JOB_BASE,
                             env.ENVIRONMENT,
                             params.SEGMENT,
                             params.DEPLOYMENT_GROUP,

@@ -52,7 +52,7 @@ pipeline {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        base_properties = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
     }
 
     stages {
@@ -63,7 +63,7 @@ pipeline {
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Release: ${params.RELEASE_IDENTIFIER}"
                 }
                 loadCMDB()
-                loadProperties("${env.base_properties}")
+                loadProperties("${env.BASE_PROPERTIES}")
                 setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
                 setHamletEngine("${HAMLET_ENGINE}", true)
             }
