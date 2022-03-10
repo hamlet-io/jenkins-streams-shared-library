@@ -14,7 +14,7 @@ def call(
     sh '''#!/bin/bash
 
         echo "Updating the hamlet cli ..."
-        pip install --silent --upgrade "hamlet${hamlet_cli_version}"
+        pip install --quiet --upgrade "hamlet${hamlet_cli_version}"
         echo "hamlet version = \"$(hamlet --version)\""
 
         echo "Updating the hamlet engine to ${required_hamlet_engine} ..."
