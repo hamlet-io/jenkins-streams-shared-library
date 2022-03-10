@@ -12,6 +12,17 @@ To find available engines install hamlet and run
 hamlet engine list-engines
 <code>
 </dd>
+<dt>update</dt>
+<dd>
+If the string true is provided, the engine is
+updated even if already installed.
+</dd>
+<dt>cliVersion</dt>
+<dd>
+The latest official version of hamlet cli is installed
+by default. If provided, this parameter is used to
+specify the version required per pip syntax.
+</dd>
 </dl>
 </p>
 <em>Notes</em>
