@@ -104,6 +104,7 @@ The following steps are provided to streamline the development of build pipeline
 - installMaven
 - installNode
 - loadCMDB
+- loadPropertiesFiles
 - loadProperties
 - notifyBuildFailure
 - notifyBuildSuccess
