@@ -5,9 +5,15 @@ def call(
     String cliVersion = ''
 ) {
     script {
+
         env['required_hamlet_engine'] = engine
         env['update_hamlet_engine'] = update
         env['hamlet_cli_version'] = cliVersion
+
+        // Handle the common case of a specific CLI version
+        if (cliVersion ==~ /^[0-9][0-9.]+$/ ) {
+            env['hamlet_cli_version'] = "==" + cliVersion
+        }
     }
 
     // The agent may already have the required version installed

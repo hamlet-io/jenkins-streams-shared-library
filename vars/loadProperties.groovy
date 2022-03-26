@@ -7,14 +7,14 @@ def call(
 ) {
     script {
         if (noWorkspace.toBoolean()) {
-            // Assume CMDB configured on the job
+            // Properties must be configured on the job
             def fileContent = readTrusted path: "${properties_path}${properties_file}${properties_extension}"
             def contextProperties = readProperties interpolate: true, text: fileContent
             contextProperties.each{ k, v -> env["${k}"] ="${v}" }
         } else {
-            // CMDB is local in the workspace
+            // Properties local to the workspace
             dir(".hamlet/properties") {
-                // Load in the properties file from the cmdb
+                // Load in the properties file
                 def contextProperties = readProperties interpolate: true, file: "${properties_path}${properties_file}${properties_extension}";
                 contextProperties.each{ k, v -> env["${k}"] ="${v}" }
             }
