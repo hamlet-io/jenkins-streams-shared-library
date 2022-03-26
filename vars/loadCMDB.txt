@@ -6,16 +6,46 @@ Clone the product CMDB into a reserved location in the workspace.
 <dl>
 <dt>product_cmdb_url</dt>
 <dd>
-The full URL to the git repository for the product. If blank, the repo is assumed to be configured on the job itself so
-a checkout is performed. If not blank, the repository is checked out.
+The full URL to the git repository for the product.
 </dd>
-<dt>branch</dt>
+<dt>product_cmdb_branch</dt>
 <dd>
-The branch to be loaded. By default <code>master</code> is used.
+The product branch to be loaded. By default <code>master</code> is used.
 </dd>
 <dt>credentialsId</dt>
 <dd>
 The id of the jenkins credential to use to access the git provider. By default <code>github</code> is used.
+</dd>
+<dt>accounts_cmdb_url</dt>
+<dd>
+The full URL to the git repository for the accounts. If blank, no processing of the accounts repo is performed.
+The common situation for this is a single repo containing both product and account information.
+If not blank, the repository is checked out.
+</dd>
+<dt>acount_cmdb_branch</dt>
+<dd>
+The accounts branch to be loaded. By default <code>master</code> is used.
+</dd>
+<dt>product_path</dt>
+<dd>
+The path under <code>cmdb_path</code> where the product branch is checked out. By default <code>product</code> is used.
+If checking out in conjunction with an accounts repo and assuming the config for only one product is in the repo,
+this must be the id of the product.
+</dd>
+<dt>accounts_path</dt>
+<dd>
+The path under <code>cmdb_path</code> where the accounts branch is checked out. By default <code>accounts</code> is used.
+If checking out in conjunction with a product repo and assuming the config for only one account is in the repo,
+this must be the id of the account.
+</dd>
+<dt>cmdb_path</dt>
+<dd>
+The relative path to the root of the CMDB. By default <code>.hamlet/cmdb</code> is used.
+</dd>
+<dt>cmdb_path</dt>
+<dd>
+The name of the environment variable to hold the path to the root of the CMDB.
+By default <code>ROOT_DIR</code> is used to match the expectations of the hamlet CLI.
 </dd>
 </dl>
 </p>
