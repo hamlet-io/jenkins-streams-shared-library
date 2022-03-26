@@ -19,7 +19,7 @@ def call(
     // The agent may already have the required version installed
     sh '''#!/bin/bash
 
-        echo "Updating the hamlet cli ..."
+        echo "Updating the hamlet cli ${hamlet_cli_version:+to (${hamlet_cli_version})}..."
         pip install --quiet --upgrade "hamlet${hamlet_cli_version}"
         echo "hamlet version = \"$(hamlet --version)\""
 
