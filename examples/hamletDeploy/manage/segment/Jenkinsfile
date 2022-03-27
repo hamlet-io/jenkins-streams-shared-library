@@ -26,7 +26,7 @@ pipeline {
 
     stages {
 
-        stage('Get Input') {
+        stage('Get Input:') {
             steps {
                 loadProperties("${env.BASE_PROPERTIES}", 'true')
 
@@ -145,7 +145,7 @@ pipeline {
             }
         }
 
-        stage('Manage') {
+        stage('Manage:') {
             steps {
                 triggerManage(
                     env.JOB_BASE,
