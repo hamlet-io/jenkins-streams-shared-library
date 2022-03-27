@@ -64,20 +64,20 @@ pipeline {
     }
 
     stages {
-        stage('Setup') {
+        stage('Setup:') {
             steps {
                 script {
                     currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
                     currentBuild.description = "FromEnvironment: ${params.FROM_ENVIRONMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.CODE_UNITS}, Commit: ${params.GIT_COMMIT}"
                 }
-                loadCMDB()
+                loadPropertiesFiles()
                 loadProperties("${env.BASE_PROPERTIES}")
                 setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
-                setHamletEngine("${HAMLET_ENGINE}", true)
+                setHamletEngine("${HAMLET_ENGINE_VERSION}", "${HAMLET_CLI_VERSION}")
             }
         }
 
-        stage('Transfer') {
+        stage('Transfer:') {
             environment {
                 GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
                 APPLY_TO_ALL_DEPLOYMENT_UNITS = "true"
