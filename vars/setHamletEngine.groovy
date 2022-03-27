@@ -1,31 +1,29 @@
 // Set the hamlet engine to use for
 def call(
     String engine,
-    Boolean update = false,
     String cliVersion = ''
 ) {
     script {
 
-        env['required_hamlet_engine'] = engine
-        env['update_hamlet_engine'] = update
-        env['hamlet_cli_version'] = cliVersion
+        env['REQUIRED_HAMLET_ENGINE'] = engine
+        env['REQUIRED_HAMLET_CLI'] = cliVersion
 
         // Handle the common case of a specific CLI version
         if (cliVersion ==~ /^[0-9][0-9.]+$/ ) {
-            env['hamlet_cli_version'] = "==" + cliVersion
+            env['REQUIRED_HAMLET_CLI'] = "==" + cliVersion
         }
     }
 
     // The agent may already have the required version installed
     sh '''#!/bin/bash
 
-        echo "Updating the hamlet cli ${hamlet_cli_version:+to (${hamlet_cli_version})}..."
-        pip install --quiet --upgrade "hamlet${hamlet_cli_version}"
+        echo "Updating the hamlet cli ${REQUIRED_HAMLET_CLI:+(${REQUIRED_HAMLET_CLI})} ..."
+        pip install --quiet --upgrade "hamlet${REQUIRED_HAMLET_CLI}"
         echo "hamlet version = \"$(hamlet --version)\""
 
-        echo "Updating the hamlet engine to ${required_hamlet_engine} ..."
-        hamlet engine install-engine --update "${required_hamlet_engine}"
-        hamlet engine set-engine "${required_hamlet_engine}"
+        echo "Updating the hamlet engine (${REQUIRED_HAMLET_ENGINE}) ..."
+        hamlet engine install-engine --update "${REQUIRED_HAMLET_ENGINE}"
+        hamlet engine set-engine "${REQUIRED_HAMLET_ENGINE}"
         echo "hamlet engine = \"$(hamlet engine get-engine)\""
     '''
 }
