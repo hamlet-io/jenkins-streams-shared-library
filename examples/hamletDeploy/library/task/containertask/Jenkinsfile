@@ -72,7 +72,7 @@ pipeline {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        BASE_PROPERTIES = env.JOB_NAME.split('/').first().toLowerCase()
 
         CLUSTER = "${params.CLUSTER_TIER}-${params.CLUSTER_COMPONENT}"
         TASK = "${params.TASK_ID}-${params.TASK_INSTANCE}-${params.TASK_VERSION}"
@@ -86,9 +86,9 @@ pipeline {
                     currentBuild.description = "Cluster: ${env.CLUSTER_TIER}, Task: ${env.TASK}, Container: ${params.TASK_CONTAINER}, Action: ${params.ACTION}"
                 }
                 loadPropertiesFiles()
-                loadProperties("${env.BASE_PROPERTIES}")
-                setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
-                setHamletEngine("${HAMLET_ENGINE_VERSION}", "${HAMLET_CLI_VERSION}")
+                loadProperties(env.BASE_PROPERTIES)
+                setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
+                setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
             }
         }
 
@@ -123,7 +123,7 @@ pipeline {
             }
         }
 
-        stage('Execution:') {
+        stage('Execute:') {
             environment {
                 CLUSTER_TIER = "${params.CLUSTER_TIER}"
                 CLUSTER_COMPONENT = "${params.CLUSTER_COMPONENT}"
