@@ -52,9 +52,9 @@ pipeline {
     }
 
     environment {
-        PARTITION = "${env.JOB_NAME}".split('/').first()
+        PARTITION = env.JOB_NAME.split('/').first()
         JOB_BASE = "/" + "${env.PARTITION}"
-        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
+        BASE_PROPERTIES = env.PARTITION.toLowerCase()
     }
 
     stages {
@@ -67,7 +67,7 @@ pipeline {
                 stage('ENV2 Plan') {
                     steps {
                         // Standard block for all stages so can restart at any stage
-                        loadProperties("${env.BASE_PROPERTIES}", 'true')
+                        loadProperties(env.BASE_PROPERTIES, 'true')
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
@@ -208,7 +208,7 @@ pipeline {
                 stage('ENV3 Plan') {
                     steps {
                         // Standard block for all stages so can restart at any stage
-                        loadProperties("${env.BASE_PROPERTIES}", 'true')
+                        loadProperties(env.BASE_PROPERTIES, 'true')
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
@@ -350,7 +350,7 @@ pipeline {
                 stage('Production Plan') {
                     steps {
                         // Standard block for all stages so can restart at any stage
-                        loadProperties("${env.BASE_PROPERTIES}", 'true')
+                        loadProperties(env.BASE_PROPERTIES, 'true')
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"

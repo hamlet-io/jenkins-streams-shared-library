@@ -66,7 +66,7 @@ pipeline {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
 
-        BASE_PROPERTIES = "${env.JOB_NAME}".split('/').first().toLowerCase()
+        BASE_PROPERTIES = env.JOB_NAME.split('/').first().toLowerCase()
     }
 
     stages {
@@ -77,9 +77,9 @@ pipeline {
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}, Tag: ${params.CODE_TAG}"
                 }
                 loadPropertiesFiles()
-                loadProperties("${env.BASE_PROPERTIES}")
-                setCloudProviderCredentials("${env.CLOUD_CREDENTIALS_ID}")
-                setHamletEngine("${HAMLET_ENGINE_VERSION}", "${HAMLET_CLI_VERSION}")
+                loadProperties(env.BASE_PROPERTIES)
+                setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
+                setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
             }
         }
 
@@ -129,7 +129,7 @@ pipeline {
             }
         }
 
-        stage('Deploy') {
+        stage('Deploy:') {
             environment {
                 GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
             }

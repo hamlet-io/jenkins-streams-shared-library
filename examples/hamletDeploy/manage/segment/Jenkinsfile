@@ -19,16 +19,16 @@ pipeline {
         PRODUCT_CONFIG_REFERENCE = 'master'
         MODE = 'update'
 
-        PARTITION = "${env.JOB_NAME}".split('/').first()
+        PARTITION = env.JOB_NAME.split('/').first()
         JOB_BASE = "/" + "${env.PARTITION}"
-        BASE_PROPERTIES = "${env.PARTITION}".toLowerCase()
+        BASE_PROPERTIES = env.PARTITION.toLowerCase()
     }
 
     stages {
 
         stage('Get Input:') {
             steps {
-                loadProperties("${env.BASE_PROPERTIES}", 'true')
+                loadProperties(env.BASE_PROPERTIES, 'true')
 
                 script {
                     if (env.SEGMENT_LIST) {
@@ -41,7 +41,7 @@ pipeline {
                                         name: 'SEGMENT',
                                         description: 'Segment to manage',
                                         multiSelectDelimiter: ',',
-                                        value: "${env.SEGMENT_LIST}",
+                                        value: env.SEGMENT_LIST,
                                         quoteValue: false,
                                         saveJSONParameterToFile: false,
                                         type: 'PT_SINGLE_SELECT',
@@ -59,7 +59,7 @@ pipeline {
                 }
 
                 // Determine the applicable environments/units
-                loadProperties("${env.SEGMENT}", 'true')
+                loadProperties(env.SEGMENT, 'true')
 
                 script {
                     def input = input(
@@ -76,7 +76,7 @@ pipeline {
                                 name: 'ENVIRONMENT',
                                 description: 'Environment to manage',
                                 multiSelectDelimiter: ',',
-                                value: "${env.ENVIRONMENT_LIST}",
+                                value: env.ENVIRONMENT_LIST,
                                 quoteValue: false,
                                 saveJSONParameterToFile: false,
                                 type: 'PT_SINGLE_SELECT',
@@ -98,7 +98,7 @@ pipeline {
                                 defaultValue: '',
                                 description: 'Segment level units to manage',
                                 multiSelectDelimiter: ',',
-                                value: "${env.SEGMENT_UNITS}",
+                                value: env.SEGMENT_UNITS,
                                 quoteValue: false,
                                 saveJSONParameterToFile: false,
                                 type: 'PT_CHECKBOX',
@@ -109,7 +109,7 @@ pipeline {
                                 defaultValue: '',
                                 description: 'Solution level units to manage',
                                 multiSelectDelimiter: ',',
-                                value: "${env.SOLUTION_UNITS}",
+                                value: env.SOLUTION_UNITS,
                                 quoteValue: false,
                                 saveJSONParameterToFile: false,
                                 type: 'PT_CHECKBOX',
@@ -120,7 +120,7 @@ pipeline {
                                 defaultValue: '',
                                 description: 'Application level units to manage',
                                 multiSelectDelimiter: ',',
-                                value: "${env.APPLICATION_UNITS}",
+                                value: env.APPLICATION_UNITS,
                                 quoteValue: false,
                                 saveJSONParameterToFile: false,
                                 type: 'PT_CHECKBOX',
