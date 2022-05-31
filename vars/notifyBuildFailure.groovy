@@ -1,13 +1,13 @@
 // Notify of failure of code build
 def call(
     String segment,
-    String deploymentUnit,
+    String deploymentUnits,
     String commit,
     String channels
 ) {
     notifyFailure(
         "Build Failed",
-        "Segment: ${segment}  \nUnit: ${deploymentUnit}  \nCommit: ${commit}",
+        "Segment: ${segment}  \nUnit(s): ${deploymentUnits}  \nCommit: ${commit}",
         channels
     )
 }

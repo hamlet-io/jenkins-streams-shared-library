@@ -71,7 +71,7 @@ pipeline {
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.channels = "${env.TEAMS_ENV2}, ${env.SLACK_ENV2}"
+                            env.CHANNELS = "${env.TEAMS_ENV2}, ${env.SLACK_ENV2}"
                         }
 
                         // Generate plan that can be checked before deployment
@@ -84,7 +84,7 @@ pipeline {
                             params.CODE_UNITS,
                             params.GIT_COMMIT,
                             params.CODE_TAG,
-                            env.channels
+                            env.CHANNELS
                         )
                     }
                 }
@@ -116,7 +116,7 @@ pipeline {
                                 params.GIT_COMMIT,
                                 params.CODE_TAG,
                                 params.RELEASE_IDENTIFIER,
-                                env.channels
+                                env.CHANNELS
                             )
                         }
                     }
@@ -133,7 +133,7 @@ pipeline {
                             params.CODE_UNITS,
                             params.GIT_COMMIT,
                             params.CODE_TAG,
-                            env.channels
+                            env.CHANNELS
                         )
 
                         // Perform deployment
@@ -144,7 +144,7 @@ pipeline {
                             params.DEPLOYMENT_GROUP,
                             params.DEPLOYMENT_UNITS,
                             params.RELEASE_IDENTIFIER,
-                            env.channels
+                            env.CHANNELS
                         )
                     }
                 }
@@ -176,7 +176,7 @@ pipeline {
                                 params.GIT_COMMIT,
                                 params.CODE_TAG,
                                 params.RELEASE_IDENTIFIER,
-                                env.channels
+                                env.CHANNELS
                             )
                         }
                     }
@@ -192,7 +192,7 @@ pipeline {
                             params.DEPLOYMENT_GROUP,
                             params.DEPLOYMENT_UNITS,
                             params.RELEASE_IDENTIFIER,
-                            env.channels
+                            env.CHANNELS
                         )
                     }
                 }
@@ -212,7 +212,7 @@ pipeline {
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.channels = "${env.TEAMS_ENV3}, ${env.SLACK_ENV3}"
+                            env.CHANNELS = "${env.TEAMS_ENV3}, ${env.SLACK_ENV3}"
                         }
 
                         // Generate plan that can be checked before deployment
@@ -225,7 +225,7 @@ pipeline {
                             params.CODE_UNITS,
                             params.GIT_COMMIT,
                             params.CODE_TAG,
-                            env.channels
+                            env.CHANNELS
                         )
                     }
                 }
@@ -257,7 +257,7 @@ pipeline {
                                 params.GIT_COMMIT,
                                 params.CODE_TAG,
                                 params.RELEASE_IDENTIFIER,
-                                env.channels
+                                env.CHANNELS
                             )
                         }
                     }
@@ -274,7 +274,7 @@ pipeline {
                             params.CODE_UNITS,
                             params.GIT_COMMIT,
                             params.CODE_TAG,
-                            env.channels
+                            env.CHANNELS
                         )
 
                         // Perform deployment
@@ -285,7 +285,7 @@ pipeline {
                             params.DEPLOYMENT_GROUP,
                             params.DEPLOYMENT_UNITS,
                             params.RELEASE_IDENTIFIER,
-                            env.channels
+                            env.CHANNELS
                         )
                     }
                 }
@@ -317,7 +317,7 @@ pipeline {
                                 params.GIT_COMMIT,
                                 params.CODE_TAG,
                                 params.RELEASE_IDENTIFIER,
-                                env.channels
+                                env.CHANNELS
                             )
                         }
                     }
@@ -333,7 +333,7 @@ pipeline {
                             params.DEPLOYMENT_GROUP,
                             params.DEPLOYMENT_UNITS,
                             params.RELEASE_IDENTIFIER,
-                            env.channels
+                            env.CHANNELS
                         )
                     }
                 }
@@ -354,7 +354,7 @@ pipeline {
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.channels = "${env.TEAMS_PRODUCTION}, ${env.SLACK_PRODUCTION}"
+                            env.CHANNELS = "${env.TEAMS_PRODUCTION}, ${env.SLACK_PRODUCTION}"
                         }
 
                         // Generate plan that can be checked before deployment
@@ -367,7 +367,7 @@ pipeline {
                             params.CODE_UNITS,
                             params.GIT_COMMIT,
                             params.CODE_TAG,
-                            env.channels
+                            env.CHANNELS
                         )
                     }
                 }
@@ -399,7 +399,7 @@ pipeline {
                                 params.GIT_COMMIT,
                                 params.CODE_TAG,
                                 params.RELEASE_IDENTIFIER,
-                                env.channels
+                                env.CHANNELS
                             )
                         }
                     }
@@ -416,7 +416,7 @@ pipeline {
                             params.DEPLOYMENT_GROUP,
                             params.CODE_UNITS,
                             params.GIT_COMMIT,
-                            env.channels
+                            env.CHANNELS
                         )
 
                         // Update build references
@@ -428,7 +428,7 @@ pipeline {
                             params.CODE_UNITS,
                             params.GIT_COMMIT,
                             params.CODE_TAG,
-                            env.channels
+                            env.CHANNELS
                         )
 
                         // Perform deployment
@@ -439,7 +439,7 @@ pipeline {
                             params.DEPLOYMENT_GROUP,
                             params.DEPLOYMENT_UNITS,
                             params.RELEASE_IDENTIFIER,
-                            env.channels
+                            env.CHANNELS
                         )
                     }
                 }

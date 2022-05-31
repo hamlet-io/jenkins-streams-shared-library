@@ -139,7 +139,7 @@ pipeline {
                     // Determine notification channels for the selected environment
                     def teams_notifications = "TEAMS_" + env.ENVIRONMENT
                     def slack_notifications = "SLACK_" + env.ENVIRONMENT
-                    env.channels = "${env[teams_notifications.toUpperCase()]}, ${env[slack_notifications.toUpperCase()]}"
+                    env.CHANNELS = "${env[teams_notifications.toUpperCase()]}, ${env[slack_notifications.toUpperCase()]}"
                 }
 
             }
@@ -157,7 +157,7 @@ pipeline {
                     env.SOLUTION_UNITS_LIST,
                     env.APPLICATION_UNITS_LIST,
                     env.TREAT_RUN_ID_DIFFERENCES_AS_SIGNIFICANT,
-                    env.channels
+                    env.CHANNELS
                 )
             }
         }

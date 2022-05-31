@@ -72,7 +72,7 @@ pipeline {
                         script {
                             currentBuild.displayName = params.SEGMENT
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.channels = "${env.TEAMS_ENV1}, ${env.SLACK_ENV1}"
+                            env.CHANNELS = "${env.TEAMS_ENV1}, ${env.SLACK_ENV1}"
                         }
 
                         // Update build references
@@ -84,7 +84,7 @@ pipeline {
                             params.CODE_UNITS,
                             params.GIT_COMMIT,
                             params.CODE_TAG,
-                            env.channels
+                            env.CHANNELS
                         )
 
                         // Perform deployment
@@ -95,7 +95,7 @@ pipeline {
                             params.DEPLOYMENT_GROUP,
                             params.DEPLOYMENT_UNITS,
                             params.RELEASE_IDENTIFIER,
-                            env.channels
+                            env.CHANNELS
                         )
 
                     }

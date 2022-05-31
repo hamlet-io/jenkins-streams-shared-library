@@ -4,9 +4,9 @@ Send setup failure event notification to one or more collaboration channels
 <em>Parameters</em>
 <p>
 <dl>
-<dt>deploymentUnit</dt>
+<dt>deploymentUnits</dt>
 <dd>
-Deployment unit
+Deployment unit(s)
 </dd>
 <dt>commit</dt>
 <dd>

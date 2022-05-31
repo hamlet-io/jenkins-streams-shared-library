@@ -11,7 +11,7 @@ def call(
 ) {
     notifyFailure(
         "Manage Environment Failed",
-        "Mode: ${deploymentMode}  \nEnvironment: ${environment}  \nSegment: ${segment}  \nLevels: ${levels}  \nSegmentUnits: ${segmentUnits}  \nSolutionUnits: ${solutionUnits}  \nApplicationUnits: ${applicationUnits}",
+        "Mode: ${deploymentMode}  \nEnvironment: ${environment}  \nSegment: ${segment}  \nLevels: ${levels}  \nSegment Units: ${segmentUnits}  \nSolution Units: ${solutionUnits}  \nApplication Units: ${applicationUnits}",
         channels
     )
 }

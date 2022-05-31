@@ -1,12 +1,12 @@
 // Notify of failure of QA of build
 def call(
-    String deploymentUnit,
+    String deploymentUnits,
     String commit,
     String channels
 ) {
     notifyFailure(
         "QA Failed",
-        "Unit: ${deploymentUnit}  \nCommit: ${commit}",
+        "Unit(s): ${deploymentUnits}  \nCommit: ${commit}",
         channels
     )
 }

@@ -1,12 +1,12 @@
 // Notify of failure of build setup e.g. package manager update failure
 def call(
-    String deploymentUnit,
+    String deploymentUnits,
     String commit,
     String channels
 ) {
     notifyFailure(
         "Setup Failed",
-        "Unit: ${deploymentUnit}  \nCommit: ${commit}",
+        "Unit(s): ${deploymentUnits}  \nCommit: ${commit}",
         channels
     )
 }

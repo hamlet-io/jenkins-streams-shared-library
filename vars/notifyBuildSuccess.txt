@@ -8,9 +8,9 @@ Send build success event notification to one or more collaboration channels
 <dd>
 Segment
 </dd>
-<dt>deploymentUnit</dt>
+<dt>deploymentUnits</dt>
 <dd>
-Deployment unit
+Deployment unit(s)
 </dd>
 <dt>commit</dt>
 <dd>
