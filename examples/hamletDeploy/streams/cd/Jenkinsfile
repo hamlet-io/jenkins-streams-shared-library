@@ -56,6 +56,8 @@ pipeline {
         PARTITION = env.JOB_NAME.split('/').first()
         JOB_BASE = "/" + "${env.PARTITION}"
         BASE_PROPERTIES = env.PARTITION.toLowerCase()
+
+        TASK_DEPLOYMENT_UNIT = "<insert deployment unit here>"
     }
 
     stages {
@@ -65,16 +67,19 @@ pipeline {
             }
 
             stages {
-                stage ('ENV1 Deploy') {
+                stage ('Setup') {
                     steps {
                         // Standard block for all stages so can restart at any stage
                         loadProperties(env.BASE_PROPERTIES, 'true')
                         script {
-                            currentBuild.displayName = params.SEGMENT
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
                             env.CHANNELS = "${env.TEAMS_ENV1}, ${env.SLACK_ENV1}"
                         }
+                    }
+                }
 
+                stage ('Update') {
+                    steps {
                         // Update build references
                         triggerUpdate(
                             env.JOB_BASE,
@@ -86,7 +91,17 @@ pipeline {
                             params.CODE_TAG,
                             env.CHANNELS
                         )
+                    }
+                }
 
+                stage ('Deploy') {
+                    // Ensure something to deploy
+                    when {
+                        not {
+                            expression { return params.DEPLOYMENT_UNITS.trim().size() == 0 }
+                        }
+                    }
+                    steps {
                         // Perform deployment
                         triggerDeploy(
                             env.JOB_BASE,
@@ -97,10 +112,42 @@ pipeline {
                             params.RELEASE_IDENTIFIER,
                             env.CHANNELS
                         )
+                    }
+                }
 
+                stage ('Migrate') {
+                    // Check if it is the task code that has been updated
+                    when {
+                        expression { return params.DEPLOYMENT_UNITS.split('[, ]+').contains(env.TASK_DEPLOYMENT_UNIT) }
+                    }
+
+                    steps {
+                        // Run the database migration task
+                        dbMigration(
+                            env.JOB_BASE,
+                            env.ENVIRONMENT,
+                            params.SEGMENT,
+                            env.CHANNELS
+                        )
                     }
                 }
             }
         }
     }
+}
+
+void dbMigration( jobBase, environment, segment, CHANNELS ) {
+    triggerContainerTask(
+        jobBase,
+        environment,
+        segment,
+        "application",
+        "app-ecs",
+        "runner",
+        "default",
+        "v1",
+        "prisma",
+        "ci:db-migrate",
+        CHANNELS
+    )
 }
