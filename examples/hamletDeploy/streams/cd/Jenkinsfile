@@ -54,7 +54,7 @@ pipeline {
 
     environment {
         PARTITION = env.JOB_NAME.split('/').first()
-        JOB_BASE = "/" + "${env.PARTITION}"
+        JOB_BASE = "/" + env.PARTITION
         BASE_PROPERTIES = env.PARTITION.toLowerCase()
 
         TASK_DEPLOYMENT_UNIT = "<insert deployment unit here>"

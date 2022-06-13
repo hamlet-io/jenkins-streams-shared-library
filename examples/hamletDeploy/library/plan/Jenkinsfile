@@ -85,7 +85,7 @@ pipeline {
 
         stage('Plan:') {
             environment {
-                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+                GITHUB_CREDENTIALS = credentials(env.GIT_CREDENTIALS_ID)
             }
 
             steps {
@@ -131,7 +131,7 @@ pipeline {
 
         stage('Deploy:') {
             environment {
-                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+                GITHUB_CREDENTIALS = credentials(env.GIT_CREDENTIALS_ID)
             }
 
             steps {
