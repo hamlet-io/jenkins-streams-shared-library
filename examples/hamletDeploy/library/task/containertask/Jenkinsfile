@@ -85,8 +85,11 @@ pipeline {
                     currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT} - ${env.SEGMENT}"
                     currentBuild.description = "Cluster: ${env.CLUSTER_TIER}, Task: ${env.TASK}, Container: ${params.TASK_CONTAINER}, Action: ${params.ACTION}"
                 }
+                // Product properties
                 loadPropertiesFiles()
                 loadProperties(env.BASE_PROPERTIES)
+                // Permit segment overrides
+                loadProperties(env.SEGMENT)
                 setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
                 setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
             }

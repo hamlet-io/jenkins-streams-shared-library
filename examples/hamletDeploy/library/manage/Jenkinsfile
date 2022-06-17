@@ -63,9 +63,6 @@ pipeline {
     }
 
     environment {
-        ENVIRONMENT = "${params.ENVIRONMENT}"
-        SEGMENT = "${params.SEGMENT}"
-
         BASE_PROPERTIES = env.JOB_NAME.split('/').first().toLowerCase()
     }
 
@@ -73,13 +70,16 @@ pipeline {
         stage('Setup:') {
             steps {
                 script {
+                    params.each{ k, v -> env["${k}"] ="${v}" }
                     currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
                     currentBuild.description = "Mode: ${params.DEPLOYMENT_MODE}, Levels: ${params.LEVELS_LIST}, SegmentUnits: ${params.SEGMENT_UNITS_LIST}, SolutionUnits: ${params.SOLUTION_UNITS_LIST}, ApplicationUnits: ${params.APPLICATION_UNITS_LIST}"
 
-                    params.each{ k, v -> env["${k}"] ="${v}" }
                 }
+                // Product properties
                 loadPropertiesFiles()
                 loadProperties(env.BASE_PROPERTIES)
+                // Permit segment overrides
+                loadProperties(env.SEGMENT)
                 setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
                 setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
             }

@@ -66,8 +66,11 @@ pipeline {
                     currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Release: ${params.RELEASE_IDENTIFIER}"
                 }
+                // Product properties
                 loadPropertiesFiles()
                 loadProperties(env.BASE_PROPERTIES)
+                // Permit segment overrides
+                loadProperties(env.SEGMENT)
                 setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
                 setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
             }

@@ -1,0 +1,20 @@
+<p>
+Manage a comma separated list
+</p>
+<em>Parameters</em>
+<p>
+<dl>
+<dt>list</dt>
+<dd>
+The comma separated list to be added to.
+It can be null.
+It is whitespace trimmed before use.
+</dd>
+<dt>items</dt>
+<dd>
+The comma separated items to be added.
+It can be null.
+It is whitespace trimmed before use.
+</dd>
+</dl>
+</p>
