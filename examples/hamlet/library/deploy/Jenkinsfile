@@ -116,17 +116,19 @@ pipeline {
             steps {
                 withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
                     sh '''#!/bin/bash
-                        hamlet setup
+                        hamlet setup || return $?
                         hamlet deploy run-deployments \
                             ${DEPLOYMENT_GROUP:+-l ${DEPLOYMENT_GROUP}} \
-                            ${DEPLOYMENT_UNITS:+-u ${DEPLOYMENT_UNITS_REGEX}}
+                            ${DEPLOYMENT_UNITS:+-u ${DEPLOYMENT_UNITS_REGEX}} \
+                        || return $?
 
                         hamlet cmdb commit-changes --products \
                             --commit-type cd \
                             --commit-description "deploy_${BUILD_NUMBER}" \
                             --commit-message "deploy_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT}" \
                             --branch "${PRODUCT_CMDB_BRANCH}" \
-                            --push
+                            --push \
+                        || return $?
                     '''
                 }
             }

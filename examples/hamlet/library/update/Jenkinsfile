@@ -119,13 +119,14 @@ pipeline {
             steps {
                 withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
                     sh '''#!/bin/bash
-                        hamlet setup
+                        hamlet setup || return $?
 
                         for DEPLOYMENT_UNIT in ${DEPLOYMENT_UNITS_LIST}; do
                             hamlet release update-image-reference \
                                 -u "${DEPLOYMENT_UNIT}" \
                                 -r "${GIT_COMMIT}" \
-                                ${CODE_TAG:+--code-tag ${CODE_TAG}}
+                                ${CODE_TAG:+--code-tag ${CODE_TAG}} \
+                            || return $?
                         done
 
                         hamlet cmdb commit-changes --products \
@@ -133,7 +134,8 @@ pipeline {
                             --commit-description "updref_${BUILD_NUMBER}" \
                             --commit-message "updref_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT}" \
                             --branch "${PRODUCT_CMDB_BRANCH}" \
-                            --push
+                            --push \
+                        || return $?
                     '''
                 }
             }
