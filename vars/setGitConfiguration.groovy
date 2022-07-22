@@ -7,7 +7,7 @@ def call(
         env['set_git_user_email'] = email
         env['set_git_user_name'] = 'automation'
 
-        if (user) {
+        if (name) {
             env['set_git_user_name'] = name
         }
     }
