@@ -56,8 +56,9 @@ pipeline {
     environment {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
-        DEPLOYMENT_UNITS = "${params.CODE_UNITS}"
+        DEPLOYMENT_UNITS_LIST= params.CODE_UNITS.tokenize(', ').join(' ')
         GIT_COMMIT = "${params.GIT_COMMIT}"
+        CODE_TAG = "${params.CODE_TAG}"
 
         BASE_PROPERTIES = env.JOB_NAME.split('/').first().toLowerCase()
     }
@@ -66,60 +67,75 @@ pipeline {
         stage('Setup:') {
             steps {
                 script {
-                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
+                    currentBuild.displayName = ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}") + "-${env.BUILD_NUMBER}"
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.CODE_UNITS}, Commit: ${params.GIT_COMMIT}, Tag: ${params.CODE_TAG}"
                 }
-                // Product properties
+
+                withFolderProperties{
+                    script {
+                        env.ACCOUNTS_CMDB_URL    = env.FOLDER_ACCOUNTS_CMDB_URL
+                        env.ACCOUNTS_CMDB_BRANCH = env.FOLDER_ACCOUNTS_CMDB_BRANCH
+                        env.PRODUCT_CMDB_URL     = env.FOLDER_PRODUCT_CMDB_URL
+                        env.PRODUCT_CMDB_BRANCH  = env.FOLDER_PRODUCT_CMDB_BRANCH
+                        env.GIT_CREDENTIALS_ID   = env.FOLDER_GIT_CREDENTIALS_ID
+                    }
+                }
+
+                // Access the properties files
                 loadPropertiesFiles()
+
+                // Get deployment properties
+                // TENANT and PRODUCT are expected to come from the properties
                 loadProperties(env.BASE_PROPERTIES)
+
                 // Permit segment overrides
                 loadProperties(env.SEGMENT)
+
+                // Determine the ACCOUNT
+                setAccount(env.PRODUCT, env.ENVIRONMENT, env.SEGMENT)
+
+                // Construct the CMDB
+                loadCMDB(
+                    env.PRODUCT_CMDB_URL,
+                    env.PRODUCT_CMDB_BRANCH,
+                    env.GIT_CREDENTIALS_ID,
+                    env.ACCOUNTS_CMDB_URL,
+                    env.ACCOUNTS_CMDB_BRANCH,
+                    env.PRODUCT
+                )
+
+                // Cloud access
                 setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
+
+                // hamlet version
                 setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
+
+                // Git config
+                setGitConfiguration(env.GIT_EMAIL_DEFAULT,env.GIT_USER_DEFAULT)
             }
         }
 
         stage('Update:') {
-            environment {
-                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
-                APPLY_TO_ALL_DEPLOYMENT_UNITS = "true"
-            }
-
             steps {
-                sh '''#!/bin/bash
-                    ${AUTOMATION_BASE_DIR}/setContext.sh
-                '''
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet setup
 
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                        for DEPLOYMENT_UNIT in ${DEPLOYMENT_UNITS_LIST}; do
+                            hamlet release update-image-reference \
+                                -u "${DEPLOYMENT_UNIT}" \
+                                -r "${GIT_COMMIT}" \
+                                ${CODE_TAG:+--code-tag ${CODE_TAG}}
+                        done
+
+                        hamlet cmdb commit-changes --products \
+                            --commit-type cd \
+                            --commit-description "updref_${BUILD_NUMBER}" \
+                            --commit-message "updref_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT}" \
+                            --branch "${PRODUCT_CMDB_BRANCH}" \
+                            --push
+                    '''
                 }
-
-                sh '''#!/bin/bash
-                    ${AUTOMATION_DIR}/constructTree.sh
-                '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
-                }
-
-                sh '''#!/bin/bash
-                    ${GENERATION_DIR}/setup.sh
-                '''
-
-                sh '''#!/bin/bash
-                    ${AUTOMATION_DIR}/confirmBuilds.sh
-                '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
-                }
-
-                sh '''#!/bin/bash
-                    ${AUTOMATION_DIR}/updateBuildReferences.sh
-                '''
             }
         }
     }

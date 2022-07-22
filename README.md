@@ -6,7 +6,7 @@ This repo provides a range of support steps and examples to assist in the use of
 
 `vars` - a range of steps to streamline the implementation of streams for a product. This follows the conventions outlined in the [Jenkins documentation](https://www.jenkins.io/doc/book/pipeline/shared-libraries/)
 
-`examples` - sample Jenkins jobs implementing the streams concept for the hamletDeploy deployment framework.
+`examples` - sample Jenkins jobs implementing the streams concept for the hamlet deployment framework.
 
 `assets` - images for use in this documentation
 
@@ -38,7 +38,7 @@ The streams convention provides a nice separation between the CI part of the wor
 
 Library jobs use the standard pipeline plugin and are where the actions needed by a stream are implemented. They result in changes to cloud deployments and update to the IaC stores used to manage the desired and actual states of environments. Each library job provides a reusable building block for stream designers.
 
-Library jobs are the point at which a specific IaC framework must be selected. Currently this repo contains [examples](examples) for the hamletDeploy framework. By isolating details of how to invoke a particular IaC framework, stream designers can focus on processes without needing to understand the intricate details of the specific framework used. In the examples provided, The IaC store contains the hamletDeploy CMDB.
+Library jobs are the point at which a specific IaC framework must be selected. Currently this repo contains [examples](examples) for the hamlet framework. By isolating details of how to invoke a particular IaC framework, stream designers can focus on processes without needing to understand the intricate details of the specific framework used. In the examples provided, The IaC store contains the hamlet CMDB.
 
 ### Jenkins job hierarchy
 
