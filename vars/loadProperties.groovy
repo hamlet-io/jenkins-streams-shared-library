@@ -14,7 +14,7 @@ def call(
                 contextProperties.each{ k, v -> env["${k}"] ="${v}" }
             } else {
                 // Properties local to the workspace
-                dir(".hamlet/properties") {
+                dir("zzhamlet/properties") {
                     // Load in the properties file
                     def contextProperties = readProperties interpolate: true, file: "${properties_path}${properties_file}${properties_extension}";
                     contextProperties.each{ k, v -> env["${k}"] ="${v}" }

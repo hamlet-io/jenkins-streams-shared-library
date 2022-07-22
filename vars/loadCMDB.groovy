@@ -9,7 +9,7 @@ def call(
     String accounts_cmdb_branch = 'master',
     String product_path = 'product',
     String accounts_path = 'accounts',
-    String cmdb_path = ".hamlet/cmdb",
+    String cmdb_path = "zzhamlet/cmdb",
     String cmdb_root_env_name = 'ROOT_DIR'
 ) {
     dir( "${cmdb_path}" ) {

@@ -11,7 +11,7 @@ The filename without extension.
 <dt>noWorkspace</dt>
 <dd>
 If true, the job is assumed to not have a workspace, in which case a repository is assumed to be configured on the job and the file is accessed using the readTrusted step.
-If false, the properties files are assumed to be installed locally under the <code>.hamlet/properties</code> directory of the workspace.
+If false, the properties files are assumed to be installed locally under the <code>zzhamlet/properties</code> directory of the workspace.
 </dd>
 <dt>properties_path</dt>
 <dd>

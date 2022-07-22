@@ -40,7 +40,8 @@ this must be the id of the account.
 </dd>
 <dt>cmdb_path</dt>
 <dd>
-The relative path to the root of the CMDB. By default <code>.hamlet/cmdb</code> is used.
+The relative path to the root of the CMDB. By default <code>zzhamlet/cmdb</code> is used. Note that this path MUST NOT include
+any dots to avoid triggering the hamlet cmdb exclusion logic that ignores dot files or directories.
 </dd>
 <dt>cmdb_path</dt>
 <dd>

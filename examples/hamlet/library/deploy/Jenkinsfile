@@ -55,7 +55,7 @@ pipeline {
     environment {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
-        DEPLOYMENT_UNITS_REGEX="^(" + params.DEPLOYMENT_UNITS.tokenize(', ').join('|') + ")$"
+        DEPLOYMENT_UNITS_REGEX="^(" + "${params.DEPLOYMENT_UNITS.tokenize(', ').join('|')}" + ")\$"
 
         BASE_PROPERTIES = env.JOB_NAME.split('/').first().toLowerCase()
     }

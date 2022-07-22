@@ -4,7 +4,7 @@ def call(
     String repo_branch = 'master',
     String credentialsId = 'github'
 ) {
-    dir('.hamlet/properties') {
+    dir('zzhamlet/properties') {
         script {
             if ( repo_url ) {
                 // Need to load the repo - don't include it in changelog calculations
