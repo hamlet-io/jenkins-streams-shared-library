@@ -1,0 +1,29 @@
+<p>
+Load a repo to get access to the properties files. Null values are acceptable for the environment/segment.
+</p>
+
+<em>Parameters</em>
+<p>
+<dl>
+<dt>product</dt>
+<dd>
+The name of the product
+</dd>
+<dt>environment</dt>
+<dd>
+The name of the environment
+</dd>
+<dt>segment</dt>
+<dd>
+The name of the segment
+</dd>
+<dt>accountVar</dt>
+<dd>
+The name of the environment variable in which the account should be stored. The default is <code>ACCOUNT</code>.
+</dd>
+</dl>
+</p>
+
+<em>Notes</em>
+<p>
+</p>

@@ -1,0 +1,20 @@
+<p>
+Establish the minimum set of configuration settings necessary for git operations.
+</p>
+
+<em>Parameters</em>
+<p>
+<dl>
+<dt>email</dt>
+<dd>
+The user email for commits
+</dd>
+<dt>name</dt>
+<dd>
+The user name for commits
+</dd>
+</dl>
+</p>
+
+<em>Notes</em>
+<p>

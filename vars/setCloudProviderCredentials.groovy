@@ -7,16 +7,17 @@
 // which need to be set based on the setting for the
 def call(
     String credentialsId,
-    String automationUserEnvVar = "AWS_AUTOMATION_USER"
+    String automationUserEnvVar = "HAMLET_AWS_AUTH_USER"
 ) {
     script {
-        def automationUser = env[automationUserEnvVar]
-        if (automationUser == '') {
-            // Set a default automation user
-            automationUser = 'HAMLET'
-            env[automationUserEnvVar] = automationUser
-        }
-        if ((credentialsId) && (automationUser != 'ROLE')) {
+        if (credentialsId) {
+            if (! env[automationUserEnvVar] ) {
+                // Set a default user
+                env[automationUserEnvVar] = 'HAMLET'
+            }
+
+            def automationUser = env[automationUserEnvVar]
+
             // Product Setup
             withCredentials([usernamePassword(credentialsId: credentialsId, usernameVariable: 'ACCESS_KEY', passwordVariable: 'SECRET_KEY' )]) {
                 env["${automationUser}_AWS_ACCESS_KEY_ID"] = "${ACCESS_KEY}"
