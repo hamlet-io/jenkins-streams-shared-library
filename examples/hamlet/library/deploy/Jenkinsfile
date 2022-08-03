@@ -64,8 +64,9 @@ pipeline {
         stage('Setup:') {
             steps {
                 script {
-                    currentBuild.displayName = ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}") + "-${env.BUILD_NUMBER}"
+                    currentBuild.displayName = "#${env.BUILD_NUMBER}-" + ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}")
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Release: ${params.RELEASE_IDENTIFIER}"
+                    env.COMMIT_CONTEXT = "group=${params.DEPLOYMENT_GROUP},units=${params.DEPLOYMENT_UNITS.replace(',', ' ')},release=${params.RELEASE_IDENTIFIER}"
                 }
 
                 withFolderProperties{
@@ -109,23 +110,35 @@ pipeline {
 
                 // Git config
                 setGitConfiguration(env.GIT_EMAIL_DEFAULT,env.GIT_USER_DEFAULT)
+
+                // Ensure plugins are loaded
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet setup || return $?
+                    '''
+                }
             }
         }
 
         stage('Deploy:') {
             steps {
+                sh '''#!/bin/bash
+                    hamlet deploy run-deployments \
+                        ${DEPLOYMENT_GROUP:+-l ${DEPLOYMENT_GROUP}} \
+                        ${DEPLOYMENT_UNITS:+-u ${DEPLOYMENT_UNITS_REGEX}} \
+                    || return $?
+                '''
+            }
+        }
+
+        stage('Commit:') {
+            steps {
                 withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
                     sh '''#!/bin/bash
-                        hamlet setup || return $?
-                        hamlet deploy run-deployments \
-                            ${DEPLOYMENT_GROUP:+-l ${DEPLOYMENT_GROUP}} \
-                            ${DEPLOYMENT_UNITS:+-u ${DEPLOYMENT_UNITS_REGEX}} \
-                        || return $?
-
                         hamlet cmdb commit-changes --products \
                             --commit-type cd \
                             --commit-description "deploy_${BUILD_NUMBER}" \
-                            --commit-message "deploy_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT}" \
+                            --commit-message "deploy_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT},${COMMIT_CONTEXT}" \
                             --branch "${PRODUCT_CMDB_BRANCH}" \
                             --push \
                         || return $?

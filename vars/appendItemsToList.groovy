@@ -3,7 +3,7 @@
 // Main rationale is to deal with the vagaries of
 // environment variable access in Jenkinsfiles
 //
-// It leverages grrovy's "truthiness" rules
+// It leverages groovy's "truthiness" rules
 //
 def call(
     String list,

@@ -71,7 +71,10 @@ pipeline {
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.CHANNELS = "${env.TEAMS_ENV2}, ${env.SLACK_ENV2}"
+
+                            // Determine notification channels
+                            env.CHANNELS = appendItemsToList('', env.TEAMS_ENV2)
+                            env.CHANNELS = appendItemsToList(env.CHANNELS, env.SLACK_ENV2)
                         }
 
                         // Generate plan that can be checked before deployment
@@ -212,7 +215,10 @@ pipeline {
                         script {
                             currentBuild.displayName = params.RELEASE_IDENTIFIER
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.CHANNELS = "${env.TEAMS_ENV3}, ${env.SLACK_ENV3}"
+
+                            // Determine notification channels
+                            env.CHANNELS = appendItemsToList('', env.TEAMS_ENV3)
+                            env.CHANNELS = appendItemsToList(env.CHANNELS, env.SLACK_ENV3)
                         }
 
                         // Generate plan that can be checked before deployment

@@ -83,17 +83,6 @@ pipeline {
                                 visibleItemCount: 10
                             ),
                             extendedChoice(
-                                name: 'LEVELS_LIST',
-                                defaultValue: '',
-                                description: 'Template levels to process',
-                                multiSelectDelimiter: ',',
-                                quoteValue: false,
-                                saveJSONParameterToFile: false,
-                                type: 'PT_CHECKBOX',
-                                value: 'segment,solution,application',
-                                visibleItemCount: 5
-                            ),
-                            extendedChoice(
                                 name: 'SEGMENT_UNITS_LIST',
                                 defaultValue: '',
                                 description: 'Segment level units to manage',
@@ -133,13 +122,13 @@ pipeline {
                         ]
                     )
                     input.each{ k, v -> env["${k}"] ="${v}" }
-                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
-                    currentBuild.description = "Levels: ${env.LEVELS_LIST}, SegmentUnits: ${env.SEGMENT_UNITS_LIST}, SolutionUnits: ${env.SOLUTION_UNITS_LIST}, ApplicationUnits: ${env.APPLICATION_UNITS_LIST}"
+
+                    currentBuild.displayName = "#${env.BUILD_NUMBER}-" + ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}")
+                    currentBuild.description = "Mode: ${env.DEPLOYMENT_MODE}, SegmentUnits: ${env.SEGMENT_UNITS_LIST}, SolutionUnits: ${env.SOLUTION_UNITS_LIST}, ApplicationUnits: ${env.APPLICATION_UNITS_LIST}"
 
                     // Determine notification channels for the selected environment
-                    def teams_notifications = "TEAMS_" + env.ENVIRONMENT
-                    def slack_notifications = "SLACK_" + env.ENVIRONMENT
-                    env.CHANNELS = "${env[teams_notifications.toUpperCase()]}, ${env[slack_notifications.toUpperCase()]}"
+                    env.CHANNELS = appendItemsToList(env.CHANNELS, env[("TEAMS_" + env.ENVIRONMENT).toUpperCase()])
+                    env.CHANNELS = appendItemsToList(env.CHANNELS, env[("SLACK_" + env.ENVIRONMENT).toUpperCase()])
                 }
 
             }
@@ -152,7 +141,7 @@ pipeline {
                     env.DEPLOYMENT_MODE,
                     env.ENVIRONMENT,
                     env.SEGMENT,
-                    env.LEVELS_LIST,
+                    "",
                     env.SEGMENT_UNITS_LIST,
                     env.SOLUTION_UNITS_LIST,
                     env.APPLICATION_UNITS_LIST,

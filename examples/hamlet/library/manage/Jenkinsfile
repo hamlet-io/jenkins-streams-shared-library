@@ -34,7 +34,7 @@ pipeline {
         string(
             name: 'LEVELS_LIST',
             defaultValue: '',
-            description: 'Levels to process'
+            description: 'Deprecated parameter - not used'
         )
         string(
             name: 'SEGMENT_UNITS_LIST',
@@ -63,6 +63,15 @@ pipeline {
     }
 
     environment {
+        DEPLOYMENT_MODE = "${params.DEPLOYMENT_MODE}"
+        ENVIRONMENT = "${params.ENVIRONMENT}"
+        SEGMENT = "${params.SEGMENT}"
+        TREAT_RUN_ID_DIFFERENCES_AS_SIGNIFICANT = "${params.TREAT_RUN_ID_DIFFERENCES_AS_SIGNIFICANT}"
+
+        SEGMENT_UNITS_REGEX="^(" + "${params.SEGMENT_UNITS_LIST.tokenize(', ').join('|')}" + ")\$"
+        SOLUTION_UNITS_REGEX="^(" + "${params.SOLUTION_UNITS_LIST.tokenize(', ').join('|')}" + ")\$"
+        APPLICATION_UNITS_REGEX="^(" + "${params.APPLICATION_UNITS_LIST.tokenize(', ').join('|')}" + ")\$"
+
         BASE_PROPERTIES = env.JOB_NAME.split('/').first().toLowerCase()
     }
 
@@ -70,56 +79,189 @@ pipeline {
         stage('Setup:') {
             steps {
                 script {
-                    params.each{ k, v -> env["${k}"] ="${v}" }
-                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
-                    currentBuild.description = "Mode: ${params.DEPLOYMENT_MODE}, Levels: ${params.LEVELS_LIST}, SegmentUnits: ${params.SEGMENT_UNITS_LIST}, SolutionUnits: ${params.SOLUTION_UNITS_LIST}, ApplicationUnits: ${params.APPLICATION_UNITS_LIST}"
-
+                    currentBuild.displayName =  "#${env.BUILD_NUMBER}-" + ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}")
+                    currentBuild.description = "Mode: ${params.DEPLOYMENT_MODE}, SegmentUnits: ${params.SEGMENT_UNITS_LIST}, SolutionUnits: ${params.SOLUTION_UNITS_LIST}, ApplicationUnits: ${params.APPLICATION_UNITS_LIST}"
+                    env.COMMIT_CONTEXT = "mode=${params.DEPLOYMENT_MODE},segmentUnits=${params.SEGMENT_UNITS_LIST.replace(',', ' ')},solutionUnits=${params.SOLUTION_UNITS_LIST.replace(',', ' ')},applicationUnits=${params.APPLICATION_UNITS_LIST}"
                 }
-                // Product properties
+
+                withFolderProperties{
+                    script {
+                        env.ACCOUNTS_CMDB_URL    = env.FOLDER_ACCOUNTS_CMDB_URL
+                        env.ACCOUNTS_CMDB_BRANCH = env.FOLDER_ACCOUNTS_CMDB_BRANCH
+                        env.PRODUCT_CMDB_URL     = env.FOLDER_PRODUCT_CMDB_URL
+                        env.PRODUCT_CMDB_BRANCH  = env.FOLDER_PRODUCT_CMDB_BRANCH
+                        env.GIT_CREDENTIALS_ID   = env.FOLDER_GIT_CREDENTIALS_ID
+                    }
+                }
+
+                // Access the properties files
                 loadPropertiesFiles()
+
+                // Get deployment properties
+                // TENANT and PRODUCT are expected to come from the properties
                 loadProperties(env.BASE_PROPERTIES)
+
                 // Permit segment overrides
                 loadProperties(env.SEGMENT)
+
+                // Determine the ACCOUNT
+                setAccount(env.PRODUCT, env.ENVIRONMENT, env.SEGMENT)
+
+                // Construct the CMDB
+                loadCMDB(
+                    env.PRODUCT_CMDB_URL,
+                    env.PRODUCT_CMDB_BRANCH,
+                    env.GIT_CREDENTIALS_ID,
+                    env.ACCOUNTS_CMDB_URL,
+                    env.ACCOUNTS_CMDB_BRANCH,
+                    env.PRODUCT
+                )
+
+                // Cloud access
                 setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
+
+                // hamlet version
                 setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
+
+                // Git config
+                setGitConfiguration(env.GIT_EMAIL_DEFAULT,env.GIT_USER_DEFAULT)
+
+                // Ensure plugins are loaded
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet setup || return $?
+                    '''
+                }
             }
         }
 
-        stage('Manage:') {
-            environment {
-                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+        stage('Update:') {
+            when {
+                not {
+                    equals expected: 'stop', actual: env.DEPLOYMENT_MODE
+                }
             }
 
+            stages {
+                stage ('Segment') {
+                    when {
+                        expression { return params.SEGMENT_UNITS_LIST.tokenize(', ').size() != 0 }
+                    }
+
+                    steps {
+                        sh '''#!/bin/bash
+                            hamlet deploy run-deployments \
+                                -m ${DEPLOYMENT_MODE} \
+                                -l segment \
+                                -u ${SEGMENT_UNITS_REGEX} \
+                            || return $?
+                        '''
+                    }
+                }
+
+                stage ('Solution') {
+                    when {
+                        expression { return params.SOLUTION_UNITS_LIST.tokenize(', ').size() != 0 }
+                    }
+
+                    steps {
+                        sh '''#!/bin/bash
+                            hamlet deploy run-deployments \
+                                -m ${DEPLOYMENT_MODE} \
+                                -l solution \
+                                -u ${SOLUTION_UNITS_REGEX} \
+                            || return $?
+                        '''
+                    }
+                }
+
+                stage ('Application') {
+                    when {
+                        expression { return params.APPLICATION_UNITS_LIST.tokenize(', ').size() != 0 }
+                    }
+
+                    steps {
+                        sh '''#!/bin/bash
+                            hamlet deploy run-deployments \
+                                -m ${DEPLOYMENT_MODE} \
+                                -l application \
+                                -u ${APPLICATION_UNITS_REGEX} \
+                            || return $?
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Delete:') {
+            when {
+                equals expected: 'stop', actual: env.DEPLOYMENT_MODE
+            }
+
+            stages {
+
+                stage ('Application') {
+                    when {
+                        expression { return params.APPLICATION_UNITS_LIST.tokenize(', ').size() != 0 }
+                    }
+
+                    steps {
+                        sh '''#!/bin/bash
+                            hamlet deploy run-deployments \
+                                -m ${DEPLOYMENT_MODE} \
+                                -l application \
+                                -u ${APPLICATION_UNITS_REGEX} \
+                            || return $?
+                        '''
+                    }
+                }
+
+                stage ('Solution') {
+                    when {
+                        expression { return params.SOLUTION_UNITS_LIST.tokenize(', ').size() != 0 }
+                    }
+
+                    steps {
+                        sh '''#!/bin/bash
+                            hamlet deploy run-deployments \
+                                -m ${DEPLOYMENT_MODE} \
+                                -l solution \
+                                -u ${SOLUTION_UNITS_REGEX} \
+                            || return $?
+                        '''
+                    }
+                }
+
+                stage ('Segment') {
+                    when {
+                        expression { return params.SEGMENT_UNITS_LIST.tokenize(', ').size() != 0 }
+                    }
+
+                    steps {
+                        sh '''#!/bin/bash
+                            hamlet deploy run-deployments \
+                                -m ${DEPLOYMENT_MODE} \
+                                -l segment \
+                                -u ${SEGMENT_UNITS_REGEX} \
+                            || return $?
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Commit:') {
             steps {
-                sh '''#!/bin/bash
-                    ${AUTOMATION_BASE_DIR}/setContext.sh
-                '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
-                }
-
-                sh '''#!/bin/bash
-                    ${AUTOMATION_DIR}/constructTree.sh
-                '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
-                }
-
-                sh '''#!/bin/bash
-                    ${GENERATION_DIR}/setup.sh
-                '''
-
-                sh '''#!/bin/bash
-                    ${AUTOMATION_DIR}/manageEnvironment.sh
-                '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet cmdb commit-changes --products \
+                            --commit-type cd \
+                            --commit-description "manage_${BUILD_NUMBER}" \
+                            --commit-message "manage_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT},${COMMIT_CONTEXT}" \
+                            --branch "${PRODUCT_CMDB_BRANCH}" \
+                            --push \
+                        || return $?
+                    '''
                 }
             }
         }

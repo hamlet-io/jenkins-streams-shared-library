@@ -73,7 +73,10 @@ pipeline {
                         loadProperties(env.BASE_PROPERTIES, 'true')
                         script {
                             currentBuild.description = "Segment: ${params.SEGMENT}, Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}"
-                            env.CHANNELS = "${env.TEAMS_ENV1}, ${env.SLACK_ENV1}"
+
+                            // Determine notification channels
+                            env.CHANNELS = appendItemsToList(env.CHANNELS, env.TEAMS_ENV1)
+                            env.CHANNELS = appendItemsToList(env.CHANNELS, env.SLACK_ENV1)
                         }
                     }
                 }

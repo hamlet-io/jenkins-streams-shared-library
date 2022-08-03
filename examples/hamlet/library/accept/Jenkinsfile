@@ -59,50 +59,85 @@ pipeline {
         stage('Setup:') {
             steps {
                 script {
-                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
+                    currentBuild.displayName = "#${env.BUILD_NUMBER}-" + ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}")
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Release: ${params.RELEASE_IDENTIFIER}"
+                    env.COMMIT_CONTEXT = "group=${params.DEPLOYMENT_GROUP},units=${params.DEPLOYMENT_UNITS.replace(',', ' ')},release=${params.RELEASE_IDENTIFIER}"
                 }
-                // Product properties
+
+                withFolderProperties{
+                    script {
+                        env.ACCOUNTS_CMDB_URL    = env.FOLDER_ACCOUNTS_CMDB_URL
+                        env.ACCOUNTS_CMDB_BRANCH = env.FOLDER_ACCOUNTS_CMDB_BRANCH
+                        env.PRODUCT_CMDB_URL     = env.FOLDER_PRODUCT_CMDB_URL
+                        env.PRODUCT_CMDB_BRANCH  = env.FOLDER_PRODUCT_CMDB_BRANCH
+                        env.GIT_CREDENTIALS_ID   = env.FOLDER_GIT_CREDENTIALS_ID
+                    }
+                }
+
+                // Access the properties files
                 loadPropertiesFiles()
+
+                // Get deployment properties
+                // TENANT and PRODUCT are expected to come from the properties
                 loadProperties(env.BASE_PROPERTIES)
+
                 // Permit segment overrides
                 loadProperties(env.SEGMENT)
+
+                // Determine the ACCOUNT
+                setAccount(env.PRODUCT, env.ENVIRONMENT, env.SEGMENT)
+
+                // Construct the CMDB
+                loadCMDB(
+                    env.PRODUCT_CMDB_URL,
+                    env.PRODUCT_CMDB_BRANCH,
+                    env.GIT_CREDENTIALS_ID,
+                    env.ACCOUNTS_CMDB_URL,
+                    env.ACCOUNTS_CMDB_BRANCH,
+                    env.PRODUCT
+                )
+
+                // Cloud access
                 setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
+
+                // hamlet version
                 setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
+
+                // Git config
+                setGitConfiguration(env.GIT_EMAIL_DEFAULT,env.GIT_USER_DEFAULT)
+
+                // Ensure plugins are loaded
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet setup || return $?
+                    '''
+                }
             }
         }
 
         stage('Accept:') {
-            environment {
-                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+            steps {
+                echo "Accept not yet implemented"
+            }
+        }
+
+        stage('Commit:') {
+            when {
+                equals expected: true, actual: false
             }
 
             steps {
-                sh '''#!/bin/bash
-                    ${AUTOMATION_BASE_DIR}/setContext.sh
-                '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet cmdb commit-changes --products \
+                            --commit-type cd \
+                            --commit-description "accept_${BUILD_NUMBER}" \
+                            --commit-message "accept_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT},${COMMIT_CONTEXT}" \
+                            --branch "${PRODUCT_CMDB_BRANCH}" \
+                            --push \
+                        || return $?
+                    '''
                 }
-
-                sh '''#!/bin/bash
-                    ${AUTOMATION_DIR}/constructTree.sh
-                '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
-                }
-
-                sh '''#!/bin/bash
-                    ${GENERATION_DIR}/setup.sh
-                '''
-
-                sh '''#!/bin/bash
-                    ${AUTOMATION_DIR}/acceptRelease.sh
-                '''
             }
         }
     }

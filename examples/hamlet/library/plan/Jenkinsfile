@@ -65,6 +65,8 @@ pipeline {
     environment {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
+        DEPLOYMENT_UNITS_REGEX="^(" + "${params.DEPLOYMENT_UNITS.tokenize(', ').join('|')}" + ")\$"
+        CODE_UNITS_LIST= params.CODE_UNITS.tokenize(', ').join(' ')
 
         BASE_PROPERTIES = env.JOB_NAME.split('/').first().toLowerCase()
     }
@@ -73,48 +75,82 @@ pipeline {
         stage('Setup:') {
             steps {
                 script {
-                    currentBuild.displayName = (env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}"
-                    currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.DEPLOYMENT_UNITS}, Commit: ${params.GIT_COMMIT}, Tag: ${params.CODE_TAG}"
+                    currentBuild.displayName = "#${env.BUILD_NUMBER}-" + ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}")
+                    currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, DeploymentUnits: ${params.DEPLOYMENT_UNITS}, CodeUnits: ${params.CODE_UNITS}, Commit: ${params.GIT_COMMIT}, Tag: ${params.CODE_TAG}"
+                    env.COMMIT_CONTEXT = "group=${params.DEPLOYMENT_GROUP},deploymentUnits=${params.DEPLOYMENT_UNITS.replace(',', ' ')},codeUnits=${params.CODE_UNITS.replace(',', ' ')},commit=${params.GIT_COMMIT},tag=${params.CODE_TAG}"
                 }
-                // Product properties
+
+                withFolderProperties{
+                    script {
+                        env.ACCOUNTS_CMDB_URL    = env.FOLDER_ACCOUNTS_CMDB_URL
+                        env.ACCOUNTS_CMDB_BRANCH = env.FOLDER_ACCOUNTS_CMDB_BRANCH
+                        env.PRODUCT_CMDB_URL     = env.FOLDER_PRODUCT_CMDB_URL
+                        env.PRODUCT_CMDB_BRANCH  = env.FOLDER_PRODUCT_CMDB_BRANCH
+                        env.GIT_CREDENTIALS_ID   = env.FOLDER_GIT_CREDENTIALS_ID
+                    }
+                }
+
+                // Access the properties files
                 loadPropertiesFiles()
+
+                // Get deployment properties
+                // TENANT and PRODUCT are expected to come from the properties
                 loadProperties(env.BASE_PROPERTIES)
+
                 // Permit segment overrides
                 loadProperties(env.SEGMENT)
+
+                // Determine the ACCOUNT
+                setAccount(env.PRODUCT, env.ENVIRONMENT, env.SEGMENT)
+
+                // Determine the plan branch
+                script {
+                    env.PLAN_BRANCH = "plan-${env.PRODUCT}-${currentBuild.displayName}"
+                }
+
+                // Construct the CMDB
+                loadCMDB(
+                    env.PRODUCT_CMDB_URL,
+                    env.PRODUCT_CMDB_BRANCH,
+                    env.GIT_CREDENTIALS_ID,
+                    env.ACCOUNTS_CMDB_URL,
+                    env.ACCOUNTS_CMDB_BRANCH,
+                    env.PRODUCT
+                )
+
+                // Cloud access
                 setCloudProviderCredentials(env.CLOUD_CREDENTIALS_ID)
+
+                // hamlet version
                 setHamletEngine(env.HAMLET_ENGINE_VERSION, env.HAMLET_CLI_VERSION)
+
+                // Git config
+                setGitConfiguration(env.GIT_EMAIL_DEFAULT,env.GIT_USER_DEFAULT)
+
+                // Ensure plugins are loaded
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet setup || return $?
+                    '''
+                }
             }
         }
 
-        stage('Plan:') {
-            environment {
-                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+        stage('Update:') {
+            when {
+                equals expected: true, actual: false
             }
 
             steps {
                 sh '''#!/bin/bash
-                    ${AUTOMATION_BASE_DIR}/setContext.sh
+                    for CODE_UNIT in ${CODE_UNITS_LIST}; do
+                        hamlet release update-image-reference \
+                            -u "${CODE_UNIT}" \
+                            -r "${GIT_COMMIT}" \
+                            ${CODE_TAG:+--code-tag ${CODE_TAG}} \
+                        || return $?
+                    done
                 '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
-                }
-
-                sh '''#!/bin/bash
-                    ${AUTOMATION_DIR}/constructTree.sh
-                '''
-
-                script {
-                    def contextProperties = readProperties interpolate: true, file: "${WORKSPACE}/context.properties";
-                    contextProperties.each{ k, v -> env["${k}"] ="${v}" }
-                }
-
-                sh '''#!/bin/bash
-                    ${GENERATION_DIR}/setup.sh
-                '''
-
-                echo "Plan update not yet implemented"
             }
 
             post {
@@ -133,12 +169,18 @@ pipeline {
         }
 
         stage('Deploy:') {
-            environment {
-                GITHUB_CREDENTIALS = credentials("${GIT_CREDENTIALS_ID}")
+            when {
+                equals expected: true, actual: false
             }
 
             steps {
-                echo "Plan deploy not yet implemented"
+                sh '''#!/bin/bash
+                    hamlet deploy run-deployments \
+                        ${DEPLOYMENT_GROUP:+-l ${DEPLOYMENT_GROUP}} \
+                        ${DEPLOYMENT_UNITS:+-u ${DEPLOYMENT_UNITS_REGEX}} \
+                        --dryrun \
+                    || return $?
+                '''
             }
 
             post {
@@ -150,6 +192,26 @@ pipeline {
                         params.DEPLOYMENT_UNITS,
                         params.CHANNELS
                     )
+                }
+            }
+        }
+
+        stage('Commit:') {
+            when {
+                equals expected: true, actual: false
+            }
+
+            steps {
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet cmdb commit-changes --products \
+                            --commit-type cd \
+                            --commit-description "plan_${BUILD_NUMBER}" \
+                            --commit-message "plan_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT},${COMMIT_CONTEXT}" \
+                            --branch "${PLAN_BRANCH}" \
+                            --push \
+                        || return $?
+                    '''
                 }
             }
         }

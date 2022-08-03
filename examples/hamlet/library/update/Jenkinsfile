@@ -56,7 +56,7 @@ pipeline {
     environment {
         ENVIRONMENT = "${params.ENVIRONMENT}"
         SEGMENT = "${params.SEGMENT}"
-        DEPLOYMENT_UNITS_LIST= params.CODE_UNITS.tokenize(', ').join(' ')
+        CODE_UNITS_LIST= params.CODE_UNITS.tokenize(', ').join(' ')
         GIT_COMMIT = "${params.GIT_COMMIT}"
         CODE_TAG = "${params.CODE_TAG}"
 
@@ -67,8 +67,9 @@ pipeline {
         stage('Setup:') {
             steps {
                 script {
-                    currentBuild.displayName = ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}") + "-${env.BUILD_NUMBER}"
+                    currentBuild.displayName = "#${env.BUILD_NUMBER}-" + ((env.SEGMENT == "default") ? "${env.ENVIRONMENT}" : "${env.ENVIRONMENT}-${env.SEGMENT}")
                     currentBuild.description = "Group: ${params.DEPLOYMENT_GROUP}, Units: ${params.CODE_UNITS}, Commit: ${params.GIT_COMMIT}, Tag: ${params.CODE_TAG}"
+                    env.COMMIT_CONTEXT = "group=${params.DEPLOYMENT_GROUP},units=${params.CODE_UNITS.replace(',', ' ')},commit=${params.GIT_COMMIT},tag=${params.CODE_TAG}"
                 }
 
                 withFolderProperties{
@@ -112,27 +113,38 @@ pipeline {
 
                 // Git config
                 setGitConfiguration(env.GIT_EMAIL_DEFAULT,env.GIT_USER_DEFAULT)
+
+                // Ensure plugins are loaded
+                withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
+                    sh '''#!/bin/bash
+                        hamlet setup || return $?
+                    '''
+                }
             }
         }
 
         stage('Update:') {
             steps {
+                sh '''#!/bin/bash
+                    for CODE_UNIT in ${CODE_UNITS_LIST}; do
+                        hamlet release update-image-reference \
+                            -u "${CODE_UNIT}" \
+                            -r "${GIT_COMMIT}" \
+                            ${CODE_TAG:+--code-tag ${CODE_TAG}} \
+                        || return $?
+                    done
+                '''
+            }
+        }
+
+        stage('Commit:') {
+            steps {
                 withCredentials([gitUsernamePassword(credentialsId: env.GIT_CREDENTIALS_ID)]) {
                     sh '''#!/bin/bash
-                        hamlet setup || return $?
-
-                        for DEPLOYMENT_UNIT in ${DEPLOYMENT_UNITS_LIST}; do
-                            hamlet release update-image-reference \
-                                -u "${DEPLOYMENT_UNIT}" \
-                                -r "${GIT_COMMIT}" \
-                                ${CODE_TAG:+--code-tag ${CODE_TAG}} \
-                            || return $?
-                        done
-
                         hamlet cmdb commit-changes --products \
                             --commit-type cd \
-                            --commit-description "updref_${BUILD_NUMBER}" \
-                            --commit-message "updref_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT}" \
+                            --commit-description "update_${BUILD_NUMBER}" \
+                            --commit-message "update_${BUILD_NUMBER},environment=${ENVIRONMENT},segment=${SEGMENT},${COMMIT_CONTEXT}" \
                             --branch "${PRODUCT_CMDB_BRANCH}" \
                             --push \
                         || return $?
