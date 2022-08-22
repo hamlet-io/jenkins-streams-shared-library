@@ -12,6 +12,7 @@ def call(
     sh '''#!/bin/bash
         current_nodejs_version="$(nodenv version)"
         if [[ ! ("${current_nodejs_version}" =~ ${required_nodejs_version}) ]]; then
+            nodenv update-version-defs
             nodenv install "${required_nodejs_version}" ||
                 { nodenv install --list; exit 1; }
             case ${required_scope} in
