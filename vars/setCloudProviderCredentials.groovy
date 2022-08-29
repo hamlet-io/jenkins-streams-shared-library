@@ -12,8 +12,14 @@ def call(
     script {
         if (credentialsId) {
             if (! env[automationUserEnvVar] ) {
-                // Set a default user
-                env[automationUserEnvVar] = 'HAMLET'
+                // Legacy support for old deployments where the user
+                // variable was based on the AUTOMATION user
+                if ( env['AWS_AUTOMATION_USER'] ) {
+                    env[automationUserEnvVar] = env['AWS_AUTOMATION_USER']
+                } else {
+                    // Set a default user
+                    env[automationUserEnvVar] = 'HAMLET'
+                }
             }
 
             def automationUser = env[automationUserEnvVar]
